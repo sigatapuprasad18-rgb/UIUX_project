@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MindWallet — Money Made Simple</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Design System Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Accessibility Skip Link -->
+    <a href="#app-content" class="skip-link">Skip to main content</a>
+
+    <div class="app">
+        <!-- Sidebar Navigation Drawer -->
+        <aside class="sidebar" id="sidebar" aria-label="Main Navigation">
+            <div class="brand">
+                <div class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="5" width="20" height="14" rx="3"></rect>
+                        <line x1="2" y1="10" x2="22" y2="10"></line>
+                    </svg>
+                </div>
+                <div>
+                    <div class="brand-name">MindWallet</div>
+                    <div class="brand-tag">Money Made Simple</div>
+                </div>
+            </div>
+
+            <div class="nav-section-title">Core Platform</div>
+            <nav class="primary-nav">
+                <a href="#dashboard" class="nav-link active" id="nav-dashboard">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#transactions" class="nav-link" id="nav-transactions">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    <span>Tracker</span>
+                </a>
+                <a href="#budget" class="nav-link" id="nav-budget">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                    <span>Budget Planner</span>
+                </a>
+                <a href="#savings" class="nav-link" id="nav-savings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path></svg>
+                    <span>Savings Goals</span>
+                </a>
+                <a href="#health" class="nav-link" id="nav-health">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                    <span>Health Score</span>
+                </a>
+            </nav>
+
+            <div class="nav-section-title">Decision Tools</div>
+            <nav class="primary-nav">
+                <a href="#subscriptions" class="nav-link" id="nav-subscriptions">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                    <span>Subscriptions</span>
+                </a>
+                <a href="#analytics" class="nav-link" id="nav-analytics">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    <span>Analytics</span>
+                </a>
+                <a href="#insights" class="nav-link" id="nav-insights">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                    <span>Smart Insights</span>
+                </a>
+                <a href="#simulator" class="nav-link" id="nav-simulator">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    <span>Simulator</span>
+                    <span class="nav-badge">Afford?</span>
+                </a>
+                <a href="#reports" class="nav-link" id="nav-reports">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                    <span>Reports</span>
+                </a>
+                <a href="#settings" class="nav-link" id="nav-settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper">
+            <!-- Header Topbar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation drawer">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    </button>
+                    <div class="search-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" class="search-input" placeholder="Search transactions, budgets, goals..." onfocus="window.location.hash='#transactions'" />
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <!-- User Mode Preset Dropdown -->
+                    <div class="mode-select-wrap">
+                        <label for="modeSelect">User Mode:</label>
+                        <select id="modeSelect" class="mode-select" aria-label="Select User Mode Preset">
+                            <option value="standard">Standard</option>
+                            <option value="accessible">Accessible</option>
+                            <option value="senior">Senior Mode</option>
+                            <option value="simplified">Simplified</option>
+                        </select>
+                    </div>
+
+                    <!-- Notification Button -->
+                    <button class="btn-icon" id="notifBtn" aria-label="Notifications Drawer">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        <span class="badge-dot"></span>
+                    </button>
+
+                    <!-- Accessibility Panel Toggle -->
+                    <button class="btn-icon" id="a11yBtn" aria-label="Accessibility Options Menu" aria-expanded="false">
+                        ♿
+                    </button>
+                </div>
+            </header>
+
+            <!-- Accessibility Toolbar Overlay Dropdown -->
+            <div class="a11y-panel" id="a11yPanel" aria-label="Accessibility Settings">
+                <div class="a11y-header">
+                    <h3>Accessibility Controls</h3>
+                </div>
+                <div class="a11y-row">
+                    <div>
+                        <div class="a11y-label">High Contrast</div>
+                        <div class="a11y-subtext">Max visual contrast</div>
+                    </div>
+                    <button class="btn btn-outline btn-sm" id="toggleContrast" aria-pressed="false">Toggle</button>
+                </div>
+                <div class="a11y-row">
+                    <div>
+                        <div class="a11y-label">Reduced Motion</div>
+                        <div class="a11y-subtext">Suppress animations</div>
+                    </div>
+                    <button class="btn btn-outline btn-sm" id="toggleMotion" aria-pressed="false">Toggle</button>
+                </div>
+                <div class="a11y-row">
+                    <div>
+                        <div class="a11y-label">Text Scale</div>
+                        <div class="a11y-subtext">Adjust font size</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-outline btn-sm" id="fontDown">A-</button>
+                        <button class="btn btn-outline btn-sm" id="fontUp">A+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Drawer -->
+            <div class="a11y-panel" id="notifDrawer" style="top:62px; right:72px; width:340px;">
+                <div class="a11y-header">
+                    <h3>Notifications</h3>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Recent Alerts</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <div style="padding:10px; background:var(--bg); border-radius:8px; font-size:0.85rem;">
+                        <div style="font-weight:600;">🛒 Groceries Budget Notice</div>
+                        <div style="color:var(--text-muted); margin-top:2px;">You reached 39% of your monthly Groceries limit.</div>
+                    </div>
+                    <div style="padding:10px; background:var(--bg); border-radius:8px; font-size:0.85rem;">
+                        <div style="font-weight:600;">🏋️ Fitness First Gym Renewal</div>
+                        <div style="color:var(--text-muted); margin-top:2px;">₹2,500 recurring charge scheduled for Aug 15.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Viewport Router Content -->
+            <main class="content-area" id="app-content" tabindex="-1">
+                <!-- Dynamically rendered by JS router -->
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal: Add Transaction -->
+    <div class="modal-overlay" id="modal-add-transaction">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Log New Transaction</h2>
+                <button class="close-btn" onclick="window.app.closeModal()">&times;</button>
+            </div>
+            <form onsubmit="window.app.handleAddTransaction(event)">
+                <div class="form-group">
+                    <label for="tx-merchant">Merchant / Source Name</label>
+                    <input type="text" id="tx-merchant" class="form-control" placeholder="e.g. Swiggy, Apple Store, Salary" required />
+                </div>
+                <div class="form-grid" style="margin-top:12px;">
+                    <div class="form-group">
+                        <label for="tx-type">Transaction Type</label>
+                        <select id="tx-type" class="form-control">
+                            <option value="expense">Expense</option>
+                            <option value="income">Income</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tx-amount">Amount (₹)</label>
+                        <input type="number" id="tx-amount" class="form-control" placeholder="1500" min="1" required />
+                    </div>
+                </div>
+                <div class="form-grid" style="margin-top:12px;">
+                    <div class="form-group">
+                        <label for="tx-category">Category</label>
+                        <select id="tx-category" class="form-control">
+                            <option value="Groceries">Groceries</option>
+                            <option value="Housing">Housing</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Subscriptions">Subscriptions</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Income">Income</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tx-date">Date</label>
+                        <input type="date" id="tx-date" class="form-control" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px;">
+                    Save Transaction
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Set Budget -->
+    <div class="modal-overlay" id="modal-set-budget">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Set Category Budget Limit</h2>
+                <button class="close-btn" onclick="window.app.closeModal()">&times;</button>
+            </div>
+            <form onsubmit="window.app.handleSetBudget(event)">
+                <div class="form-group">
+                    <label for="budget-category">Category</label>
+                    <select id="budget-category" class="form-control">
+                        <option value="Groceries">Groceries</option>
+                        <option value="Housing">Housing</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Dining out">Dining out</option>
+                        <option value="Subscriptions">Subscriptions</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Shopping">Shopping</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-top:12px;">
+                    <label for="budget-limit">Monthly Limit (₹)</label>
+                    <input type="number" id="budget-limit" class="form-control" placeholder="10000" min="100" required />
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px;">
+                    Update Budget Threshold
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add Savings Goal -->
+    <div class="modal-overlay" id="modal-add-goal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Create Savings Goal</h2>
+                <button class="close-btn" onclick="window.app.closeModal()">&times;</button>
+            </div>
+            <form onsubmit="window.app.handleAddGoal(event)">
+                <div class="form-group">
+                    <label for="goal-name">Goal Name</label>
+                    <input type="text" id="goal-name" class="form-control" placeholder="e.g. Electric Scooter, Emergency Fund" required />
+                </div>
+                <div class="form-grid" style="margin-top:12px;">
+                    <div class="form-group">
+                        <label for="goal-target">Target Amount (₹)</label>
+                        <input type="number" id="goal-target" class="form-control" placeholder="80000" min="1000" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-monthly">Monthly Deposit (₹)</label>
+                        <input type="number" id="goal-monthly" class="form-control" placeholder="5000" min="500" required />
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:12px;">
+                    <label for="goal-category">Category</label>
+                    <select id="goal-category" class="form-control">
+                        <option value="Safety">Safety Cushion</option>
+                        <option value="Tech">Tech & Gadgets</option>
+                        <option value="Travel">Travel & Experience</option>
+                        <option value="Property">Home & Property</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px;">
+                    Save Goal
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add Subscription -->
+    <div class="modal-overlay" id="modal-add-subscription">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Track New Subscription</h2>
+                <button class="close-btn" onclick="window.app.closeModal()">&times;</button>
+            </div>
+            <form onsubmit="window.app.handleAddSubscription(event)">
+                <div class="form-group">
+                    <label for="sub-name">Service Name</label>
+                    <input type="text" id="sub-name" class="form-control" placeholder="e.g. YouTube Premium, Adobe CC" required />
+                </div>
+                <div class="form-grid" style="margin-top:12px;">
+                    <div class="form-group">
+                        <label for="sub-amount">Recurring Amount (₹)</label>
+                        <input type="number" id="sub-amount" class="form-control" placeholder="299" min="1" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="sub-cycle">Billing Cycle</label>
+                        <select id="sub-cycle" class="form-control">
+                            <option value="Monthly">Monthly</option>
+                            <option value="Annual">Annual</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-grid" style="margin-top:12px;">
+                    <div class="form-group">
+                        <label for="sub-category">Category</label>
+                        <select id="sub-category" class="form-control">
+                            <option value="Streaming">Streaming</option>
+                            <option value="Audio">Audio</option>
+                            <option value="Cloud Services">Cloud Services</option>
+                            <option value="Health">Health & Fitness</option>
+                            <option value="Software">Software & SaaS</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sub-next">Next Renewal Date</label>
+                        <input type="date" id="sub-next" class="form-control" required />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px;">
+                    Track Subscription
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Application Script Module -->
+    <script type="module" src="js/app.js"></script>
+</body>
+
+</html>
