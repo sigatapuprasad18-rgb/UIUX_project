@@ -6,11 +6,15 @@ export function renderReports() {
     const currency = store.getSettings().currency;
     const txs = store.getTransactions();
 
+    const now = new Date();
+    const monthName = now.toLocaleString('default', { month: 'long' });
+    const yearStr = now.getFullYear();
+
     return `
         <div class="page-header">
             <div class="page-title-group">
                 <h1>Monthly Financial Statement</h1>
-                <p class="page-subtitle">Clean, bank-statement inspired summary for August 2026.</p>
+                <p class="page-subtitle">Clean, bank-statement inspired summary for ${monthName} ${yearStr}.</p>
             </div>
             <button class="btn btn-outline" onclick="window.print()">
                 <span>🖨️ Print / Download PDF</span>
@@ -21,7 +25,7 @@ export function renderReports() {
             <div style="display:flex; justify-content:space-between; border-bottom:2px solid var(--navy); padding-bottom:16px;">
                 <div>
                     <h2 style="font-size:1.5rem; font-weight:700; color:var(--navy);">MindWallet Statement</h2>
-                    <p style="font-size:0.88rem; color:var(--text-muted);">Period: August 1, 2026 – August 31, 2026</p>
+                    <p style="font-size:0.88rem; color:var(--text-muted);">Period: ${monthName} 1, ${yearStr} – ${monthName} ${new Date(yearStr, now.getMonth() + 1, 0).getDate()}, ${yearStr}</p>
                 </div>
                 <div style="text-align:right;">
                     <div style="font-weight:700; font-size:1.1rem;">Account #MW-88392</div>

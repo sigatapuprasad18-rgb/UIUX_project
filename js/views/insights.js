@@ -2,6 +2,9 @@
 import { store } from '../store.js';
 
 export function renderInsights() {
+    const now = new Date();
+    const monthName = now.toLocaleString('default', { month: 'long' });
+
     return `
         <div class="page-header">
             <div class="page-title-group">
@@ -17,7 +20,7 @@ export function renderInsights() {
                     <div>
                         <h3 style="font-size:1.05rem; font-weight:700;">Groceries Pacing Exceeding Goal</h3>
                         <p style="color:var(--text-muted); font-size:0.9rem; margin-top:4px;">
-                            You spent 18% less on groceries during the first week of August compared to July. At this rate, you will save ₹2,400 this month!
+                            You spent 18% less on groceries during the first week of ${monthName} compared to last month. At this rate, you will save ₹2,400 this month!
                         </p>
                     </div>
                 </div>

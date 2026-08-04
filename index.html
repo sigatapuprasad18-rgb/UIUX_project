@@ -125,11 +125,36 @@
                     <button class="btn-icon" id="a11yBtn" aria-label="Accessibility Options Menu" aria-expanded="false">
                         ♿
                     </button>
+
+                    <!-- User Profile Avatar Button -->
+                    <button class="user-avatar-btn" id="userProfileBtn" aria-label="User Profile Options">
+                        <span class="user-avatar-badge" id="userAvatarBadge">PP</span>
+                        <span id="userNameLabel" class="secondary-detail">Peter Parker</span>
+                    </button>
                 </div>
             </header>
 
+            <!-- User Profile Dropdown Panel -->
+            <div class="a11y-panel" id="profilePanel" style="width:280px;">
+                <div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border); padding-bottom:12px;">
+                    <span class="user-avatar-badge" id="dropdownAvatarBadge" style="width:42px; height:42px; font-size:1.1rem;">PP</span>
+                    <div>
+                        <div style="font-weight:700;" id="dropdownUserName">Peter Parker</div>
+                        <div style="font-size:0.78rem; color:var(--text-muted);" id="dropdownUserRole">Student / Freelance Photographer</div>
+                    </div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+                    <a href="#settings" class="btn btn-outline btn-sm" style="width:100%; text-align:left; justify-content:flex-start;" onclick="document.getElementById('profilePanel').classList.remove('open')">
+                        ⚙️ Account Settings
+                    </a>
+                    <button class="btn btn-danger btn-sm" style="width:100%; text-align:left; justify-content:flex-start;" onclick="window.app.handleLogout()">
+                        🚪 Sign Out
+                    </button>
+                </div>
+            </div>
+
             <!-- Accessibility Toolbar Overlay Dropdown -->
-            <div class="a11y-panel" id="a11yPanel" aria-label="Accessibility Settings">
+            <div class="a11y-panel" id="a11yPanel" aria-label="Accessibility Settings" style="width:320px;">
                 <div class="a11y-header">
                     <h3>Accessibility Controls</h3>
                 </div>
@@ -153,14 +178,15 @@
                         <div class="a11y-subtext">Adjust font size</div>
                     </div>
                     <div style="display:flex; gap:6px;">
-                        <button class="btn btn-outline btn-sm" id="fontDown">A-</button>
-                        <button class="btn btn-outline btn-sm" id="fontUp">A+</button>
+                        <button class="btn btn-outline btn-sm" id="fontDown" title="Decrease Font Size">A-</button>
+                        <button class="btn btn-outline btn-sm" id="fontReset" title="Reset Font Size to Default">Reset</button>
+                        <button class="btn btn-outline btn-sm" id="fontUp" title="Increase Font Size">A+</button>
                     </div>
                 </div>
             </div>
 
             <!-- Notifications Drawer -->
-            <div class="a11y-panel" id="notifDrawer" style="top:62px; right:72px; width:340px;">
+            <div class="a11y-panel" id="notifDrawer" style="width:340px;">
                 <div class="a11y-header">
                     <h3>Notifications</h3>
                     <span style="font-size:0.75rem; color:var(--text-muted);">Recent Alerts</span>

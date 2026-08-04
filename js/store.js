@@ -6,21 +6,36 @@ const STORAGE_KEYS = {
     GOALS: 'mindwallet_goals',
     SUBSCRIPTIONS: 'mindwallet_subscriptions',
     NOTIFICATIONS: 'mindwallet_notifications',
-    SETTINGS: 'mindwallet_settings'
+    SETTINGS: 'mindwallet_settings',
+    AUTH: 'mindwallet_auth'
 };
 
-// Initial Seed Data
+const INITIAL_USER = {
+    id: 'usr-1',
+    name: 'Peter Parker',
+    email: 'peter.parker@midtown.edu',
+    role: 'Student / Freelance Photographer',
+    avatar: 'PP'
+};
+
+const getRelativeDate = (offsetDays = 0) => {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    return d.toISOString().split('T')[0];
+};
+
+// Initial Seed Data for Tom Holland
 const INITIAL_TRANSACTIONS = [
-    { id: 'tx-1', merchant: 'Salary Credit', category: 'Income', amount: 62000, type: 'income', date: '2026-08-01', icon: '💼', iconBg: '#EAF1FC', iconColor: '#10233F' },
-    { id: 'tx-2', merchant: 'FreshMart Supermarket', category: 'Groceries', amount: 3450, type: 'expense', date: '2026-08-03', icon: '🛒', iconBg: '#E4F5EE', iconColor: '#1E9E75' },
-    { id: 'tx-3', merchant: 'Urban Housing Rent', category: 'Housing', amount: 18000, type: 'expense', date: '2026-08-01', icon: '🏠', iconBg: '#EAF1FC', iconColor: '#10233F' },
-    { id: 'tx-4', merchant: 'State Power Utility', category: 'Utilities', amount: 2150, type: 'expense', date: '2026-08-02', icon: '⚡', iconBg: '#FEF3E2', iconColor: '#F5A524' },
-    { id: 'tx-5', merchant: 'BigBasket Grocery', category: 'Groceries', amount: 1240, type: 'expense', date: '2026-08-02', icon: '🛒', iconBg: '#E4F5EE', iconColor: '#1E9E75' },
-    { id: 'tx-6', merchant: 'Netflix Premium', category: 'Subscriptions', amount: 649, type: 'expense', date: '2026-08-03', icon: '🎬', iconBg: '#FCE8E8', iconColor: '#DC3545' },
-    { id: 'tx-7', merchant: 'Spotify Family Plan', category: 'Subscriptions', amount: 179, type: 'expense', date: '2026-08-03', icon: '🎵', iconBg: '#E4F5EE', iconColor: '#1E9E75' },
-    { id: 'tx-8', merchant: 'PVR Cinemas Ticket', category: 'Entertainment', amount: 680, type: 'expense', date: '2026-07-30', icon: '🎟️', iconBg: '#FEF3E2', iconColor: '#F5A524' },
-    { id: 'tx-9', merchant: 'Freelance Design Retainer', category: 'Income', amount: 15000, type: 'income', date: '2026-07-28', icon: '💻', iconBg: '#F0EBFF', iconColor: '#6E44FF' },
-    { id: 'tx-10', merchant: 'Metro Rail Transport Card', category: 'Transport', amount: 1000, type: 'expense', date: '2026-07-29', icon: '🚇', iconBg: '#EAF1FC', iconColor: '#10233F' }
+    { id: 'tx-1', merchant: 'Salary Credit', category: 'Income', amount: 62000, type: 'income', date: getRelativeDate(-3), icon: '💼', iconBg: '#EAF1FC', iconColor: '#10233F' },
+    { id: 'tx-2', merchant: 'FreshMart Supermarket', category: 'Groceries', amount: 3450, type: 'expense', date: getRelativeDate(0), icon: '🛒', iconBg: '#E4F5EE', iconColor: '#1E9E75' },
+    { id: 'tx-3', merchant: 'Urban Housing Rent', category: 'Housing', amount: 18000, type: 'expense', date: getRelativeDate(-4), icon: '🏠', iconBg: '#EAF1FC', iconColor: '#10233F' },
+    { id: 'tx-4', merchant: 'State Power Utility', category: 'Utilities', amount: 2150, type: 'expense', date: getRelativeDate(-2), icon: '⚡', iconBg: '#FEF3E2', iconColor: '#F5A524' },
+    { id: 'tx-5', merchant: 'BigBasket Grocery', category: 'Groceries', amount: 1240, type: 'expense', date: getRelativeDate(-1), icon: '🛒', iconBg: '#E4F5EE', iconColor: '#1E9E75' },
+    { id: 'tx-6', merchant: 'Netflix Premium', category: 'Subscriptions', amount: 649, type: 'expense', date: getRelativeDate(0), icon: '🎬', iconBg: '#FCE8E8', iconColor: '#DC3545' },
+    { id: 'tx-7', merchant: 'Spotify Family Plan', category: 'Subscriptions', amount: 179, type: 'expense', date: getRelativeDate(-1), icon: '🎵', iconBg: '#E4F5EE', iconColor: '#1E9E75' },
+    { id: 'tx-8', merchant: 'PVR Cinemas Ticket', category: 'Entertainment', amount: 680, type: 'expense', date: getRelativeDate(-5), icon: '🎟️', iconBg: '#FEF3E2', iconColor: '#F5A524' },
+    { id: 'tx-9', merchant: 'Freelance Design Retainer', category: 'Income', amount: 15000, type: 'income', date: getRelativeDate(-7), icon: '💻', iconBg: '#F0EBFF', iconColor: '#6E44FF' },
+    { id: 'tx-10', merchant: 'Metro Rail Transport Card', category: 'Transport', amount: 1000, type: 'expense', date: getRelativeDate(-6), icon: '🚇', iconBg: '#EAF1FC', iconColor: '#10233F' }
 ];
 
 const INITIAL_BUDGETS = [
@@ -42,11 +57,11 @@ const INITIAL_GOALS = [
 ];
 
 const INITIAL_SUBSCRIPTIONS = [
-    { id: 's-1', name: 'Netflix 4K Ultra Plan', category: 'Streaming', amount: 649, cycle: 'Monthly', nextBilling: '2026-09-03', status: 'Active', icon: '🎬' },
-    { id: 's-2', name: 'Spotify Premium Family', category: 'Audio', amount: 179, cycle: 'Monthly', nextBilling: '2026-09-03', status: 'Active', icon: '🎵' },
-    { id: 's-3', name: 'Fitness First Gym Membership', category: 'Health', amount: 2500, cycle: 'Monthly', nextBilling: '2026-08-15', status: 'Active', icon: '🏋️' },
-    { id: 's-4', name: 'iCloud+ 200GB Storage', category: 'Cloud Services', amount: 219, cycle: 'Monthly', nextBilling: '2026-08-20', status: 'Active', icon: '☁️' },
-    { id: 's-5', name: 'Amazon Prime Annual', category: 'Shopping & Video', amount: 1499, cycle: 'Annual', nextBilling: '2026-11-10', status: 'Active', icon: '📦' }
+    { id: 's-1', name: 'Netflix 4K Ultra Plan', category: 'Streaming', amount: 649, cycle: 'Monthly', nextBilling: getRelativeDate(30), status: 'Active', icon: '🎬' },
+    { id: 's-2', name: 'Spotify Premium Family', category: 'Audio', amount: 179, cycle: 'Monthly', nextBilling: getRelativeDate(28), status: 'Active', icon: '🎵' },
+    { id: 's-3', name: 'Fitness First Gym Membership', category: 'Health', amount: 2500, cycle: 'Monthly', nextBilling: getRelativeDate(11), status: 'Active', icon: '🏋️' },
+    { id: 's-4', name: 'iCloud+ 200GB Storage', category: 'Cloud Services', amount: 219, cycle: 'Monthly', nextBilling: getRelativeDate(16), status: 'Active', icon: '☁️' },
+    { id: 's-5', name: 'Amazon Prime Annual', category: 'Shopping & Video', amount: 1499, cycle: 'Annual', nextBilling: getRelativeDate(95), status: 'Active', icon: '📦' }
 ];
 
 const INITIAL_NOTIFICATIONS = [
@@ -184,6 +199,48 @@ class Store {
         localStorage.setItem(STORAGE_KEYS.SUBSCRIPTIONS, JSON.stringify(INITIAL_SUBSCRIPTIONS));
         localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(INITIAL_NOTIFICATIONS));
         localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(INITIAL_SETTINGS));
+        localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(INITIAL_USER));
+    }
+
+    // Authentication Methods
+    getCurrentUser() {
+        const auth = localStorage.getItem(STORAGE_KEYS.AUTH);
+        return auth ? JSON.parse(auth) : null;
+    }
+
+    login(email, password) {
+        // Validate user credentials (accepts demo account or stored account)
+        const user = {
+            id: 'usr-' + Date.now(),
+            name: email.split('@')[0].replace('.', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()),
+            email: email,
+            role: 'Registered User',
+            avatar: email.substring(0, 2).toUpperCase()
+        };
+        localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(user));
+        return user;
+    }
+
+    register(name, email, role) {
+        const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U';
+        const user = {
+            id: 'usr-' + Date.now(),
+            name: name,
+            email: email,
+            role: role || 'Student / Young Professional',
+            avatar: initials
+        };
+        localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(user));
+        return user;
+    }
+
+    loginAsGuest() {
+        localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(INITIAL_USER));
+        return INITIAL_USER;
+    }
+
+    logout() {
+        localStorage.removeItem(STORAGE_KEYS.AUTH);
     }
 
     // Calculations Engine

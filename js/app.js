@@ -11,6 +11,7 @@ import { renderInsights } from './views/insights.js';
 import { renderSimulator } from './views/simulator.js';
 import { renderReports } from './views/reports.js';
 import { renderSettings } from './views/settings.js';
+import { renderLogin } from './views/login.js';
 
 class App {
     constructor() {
@@ -21,8 +22,10 @@ class App {
     init() {
         this.setupRouter();
         this.setupAccessibilityPanel();
+        this.setupProfilePanel();
         this.setupGlobalEvents();
         this.applySettings(store.getSettings());
+        this.updateUserProfileUI();
     }
 
     setupRouter() {
@@ -32,9 +35,18 @@ class App {
 
     handleRoute() {
         const hash = window.location.hash.replace('#', '') || 'dashboard';
+        const user = store.getCurrentUser();
+
+        if (!user && hash !== 'login') {
+            this.currentView = 'login';
+            window.location.hash = '#login';
+            return;
+        }
+
         this.currentView = hash;
         this.renderCurrentView();
         this.updateActiveNav(hash);
+        this.updateUserProfileUI();
     }
 
     updateActiveNav(hash) {
@@ -50,9 +62,43 @@ class App {
         document.getElementById('sidebar')?.classList.remove('open');
     }
 
+    updateUserProfileUI() {
+        const user = store.getCurrentUser();
+        const body = document.body;
+
+        if (user) {
+            body.classList.remove('logged-out');
+            const userBtn = document.getElementById('userProfileBtn');
+            const badge = document.getElementById('userAvatarBadge');
+            const nameLabel = document.getElementById('userNameLabel');
+            const dropBadge = document.getElementById('dropdownAvatarBadge');
+            const dropName = document.getElementById('dropdownUserName');
+            const dropRole = document.getElementById('dropdownUserRole');
+
+            if (userBtn) userBtn.style.display = 'flex';
+            if (badge) badge.innerText = user.avatar || 'AM';
+            if (nameLabel) nameLabel.innerText = user.name;
+            if (dropBadge) dropBadge.innerText = user.avatar || 'AM';
+            if (dropName) dropName.innerText = user.name;
+            if (dropRole) dropRole.innerText = user.role || 'Member';
+        } else {
+            body.classList.add('logged-out');
+            document.getElementById('notifDrawer')?.classList.remove('open');
+            document.getElementById('profilePanel')?.classList.remove('open');
+            document.getElementById('a11yPanel')?.classList.remove('open');
+        }
+    }
+
     renderCurrentView() {
         const content = document.getElementById('app-content');
         if (!content) return;
+
+        const user = store.getCurrentUser();
+        if (!user || this.currentView === 'login') {
+            content.innerHTML = renderLogin();
+            window.scrollTo(0, 0);
+            return;
+        }
 
         switch (this.currentView) {
             case 'dashboard': content.innerHTML = renderDashboard(); break;
@@ -66,6 +112,7 @@ class App {
             case 'simulator': content.innerHTML = renderSimulator(); break;
             case 'reports': content.innerHTML = renderReports(); break;
             case 'settings': content.innerHTML = renderSettings(); break;
+            case 'login': content.innerHTML = renderLogin(); break;
             default: content.innerHTML = renderDashboard(); break;
         }
 
@@ -112,6 +159,12 @@ class App {
                 store.updateSettings({ fontSizeStep: settings.fontSizeStep + 1 });
                 this.applySettings(store.getSettings());
             }
+        });
+
+        document.getElementById('fontReset')?.addEventListener('click', () => {
+            store.updateSettings({ fontSizeStep: 0 });
+            this.applySettings(store.getSettings());
+            this.toast('Font size reset to default (16px)', 'info');
         });
 
         document.getElementById('fontDown')?.addEventListener('click', () => {
@@ -403,6 +456,83 @@ class App {
                     </p>
                 </div>
             `;
+        }
+    }
+
+    setupProfilePanel() {
+        const profileBtn = document.getElementById('userProfileBtn');
+        const profilePanel = document.getElementById('profilePanel');
+
+        if (profileBtn && profilePanel) {
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profilePanel.classList.toggle('open');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!profilePanel.contains(e.target) && e.target !== profileBtn) {
+                    profilePanel.classList.remove('open');
+                }
+            });
+        }
+    }
+
+    switchAuthTab(tab) {
+        const formLogin = document.getElementById('form-login');
+        const formRegister = document.getElementById('form-register');
+        const tabLogin = document.getElementById('tab-login');
+        const tabRegister = document.getElementById('tab-register');
+
+        if (tab === 'login') {
+            if (formLogin) formLogin.style.display = 'block';
+            if (formRegister) formRegister.style.display = 'none';
+            if (tabLogin) { tabLogin.style.background = 'var(--surface)'; tabLogin.style.color = 'var(--text)'; }
+            if (tabRegister) { tabRegister.style.background = 'transparent'; tabRegister.style.color = 'var(--text-muted)'; }
+        } else {
+            if (formLogin) formLogin.style.display = 'none';
+            if (formRegister) formRegister.style.display = 'block';
+            if (tabRegister) { tabRegister.style.background = 'var(--surface)'; tabRegister.style.color = 'var(--text)'; }
+            if (tabLogin) { tabLogin.style.background = 'transparent'; tabLogin.style.color = 'var(--text-muted)'; }
+        }
+    }
+
+    handleLoginSubmit(e) {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const pass = document.getElementById('login-password').value;
+
+        const user = store.login(email, pass);
+        this.toast(`Welcome back, ${user.name}!`, 'success');
+        window.location.hash = '#dashboard';
+        this.handleRoute();
+    }
+
+    handleRegisterSubmit(e) {
+        e.preventDefault();
+        const name = document.getElementById('reg-name').value;
+        const email = document.getElementById('reg-email').value;
+        const role = document.getElementById('reg-role').value;
+
+        const user = store.register(name, email, role);
+        this.toast(`Account created! Welcome, ${user.name}.`, 'success');
+        window.location.hash = '#dashboard';
+        this.handleRoute();
+    }
+
+    handleGuestLoginSubmit() {
+        const user = store.loginAsGuest();
+        this.toast(`Signed in as Demo Guest (${user.name})`, 'info');
+        window.location.hash = '#dashboard';
+        this.handleRoute();
+    }
+
+    handleLogout() {
+        if (confirm('Are you sure you want to sign out?')) {
+            store.logout();
+            document.getElementById('profilePanel')?.classList.remove('open');
+            this.toast('Signed out successfully', 'info');
+            window.location.hash = '#login';
+            this.handleRoute();
         }
     }
 
