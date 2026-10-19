@@ -1,21 +1,28 @@
 /* MindWallet — Main Application Controller & Router */
-import { store } from './store.js';
+import { store, escapeHtml, CATEGORY_ICONS } from './store.js';
+import { feedback } from './ui/feedback.js';
+import { onboarding } from './ui/onboarding.js';
+import { coach } from './ui/coach.js';
+
 import { renderDashboard } from './views/dashboard.js';
-import { renderTransactions, renderTxRows } from './views/transactions.js';
-import { renderBudget } from './views/budget.js';
-import { renderSavings } from './views/savings.js';
-import { renderHealth } from './views/health.js';
-import { renderSubscriptions } from './views/subscriptions.js';
-import { renderAnalytics } from './views/analytics.js';
+import { renderActivity } from './views/activity.js';
+import { renderPlan } from './views/plan.js';
 import { renderInsights } from './views/insights.js';
-import { renderSimulator } from './views/simulator.js';
-import { renderReports } from './views/reports.js';
 import { renderSettings } from './views/settings.js';
 import { renderLogin } from './views/login.js';
 
 class App {
     constructor() {
         this.currentView = 'dashboard';
+        this.activeSubTab = {
+            activity: 'transactions',
+            plan: 'budget',
+            insights: 'health'
+        };
+        this.selectedReportMonth = null;
+        this.activeModal = null;
+        this.previousActiveElement = null;
+        window.app = this;
         this.init();
     }
 
@@ -24,8 +31,25 @@ class App {
         this.setupAccessibilityPanel();
         this.setupProfilePanel();
         this.setupGlobalEvents();
+        this.setupGlobalSearch();
+        this.updateNotificationsUI();
         this.applySettings(store.getSettings());
         this.updateUserProfileUI();
+        this.updateTopbarPersonaSelect();
+        this.updateSidebarA11y();
+        window.addEventListener('resize', () => this.updateSidebarA11y());
+
+        // First-visit interactive onboarding wizard
+        if (!store.hasCompletedOnboarding() && store.getCurrentUser()) {
+            setTimeout(() => {
+                onboarding.open(1);
+            }, 600);
+        }
+
+        // Check contextual suggestions after load
+        setTimeout(() => {
+            feedback.checkAndShowContextualSuggestion();
+        }, 1200);
     }
 
     setupRouter() {
@@ -34,32 +58,130 @@ class App {
     }
 
     handleRoute() {
-        const hash = window.location.hash.replace('#', '') || 'dashboard';
+        const rawHash = window.location.hash.replace('#', '') || 'dashboard';
         const user = store.getCurrentUser();
 
-        if (!user && hash !== 'login') {
+        if (!user && rawHash !== 'login') {
             this.currentView = 'login';
             window.location.hash = '#login';
             return;
         }
 
-        this.currentView = hash;
+        // Map sub-routes / backward-compatible deep links to parent views & active sub-tabs
+        let parentView = 'dashboard';
+        let subTab = null;
+
+        if (rawHash === 'login') {
+            parentView = 'login';
+        } else if (rawHash === 'settings') {
+            parentView = 'settings';
+        } else if (rawHash === 'activity' || rawHash === 'transactions' || rawHash === 'reports') {
+            parentView = 'activity';
+            subTab = rawHash === 'reports' ? 'reports' : (rawHash === 'transactions' ? 'transactions' : (this.activeSubTab.activity || 'transactions'));
+            this.activeSubTab.activity = subTab;
+        } else if (rawHash === 'plan' || rawHash === 'budget' || rawHash === 'savings' || rawHash === 'subscriptions') {
+            parentView = 'plan';
+            subTab = (rawHash === 'savings' || rawHash === 'subscriptions') ? rawHash : (rawHash === 'budget' ? 'budget' : (this.activeSubTab.plan || 'budget'));
+            this.activeSubTab.plan = subTab;
+        } else if (rawHash === 'insights' || rawHash === 'health' || rawHash === 'analytics' || rawHash === 'nudges' || rawHash === 'simulator') {
+            parentView = 'insights';
+            subTab = (rawHash === 'analytics' || rawHash === 'nudges' || rawHash === 'simulator') ? rawHash : (rawHash === 'health' ? 'health' : (this.activeSubTab.insights || 'health'));
+            this.activeSubTab.insights = subTab;
+        } else {
+            parentView = 'dashboard';
+        }
+
+        this.currentView = parentView;
         this.renderCurrentView();
-        this.updateActiveNav(hash);
+        this.updateActiveNav(parentView);
         this.updateUserProfileUI();
+        this.updateNotificationsUI();
+
+        const viewTitles = {
+            dashboard: 'Overview Dashboard',
+            activity: subTab === 'reports' ? 'Monthly Financial Statement' : 'Income & Expense Tracker',
+            plan: subTab === 'savings' ? 'Savings Goals' : (subTab === 'subscriptions' ? 'Subscription Manager' : 'Budget Planner'),
+            insights: subTab === 'analytics' ? 'Analytics & Trends' : (subTab === 'simulator' ? 'Purchase Simulator' : (subTab === 'nudges' ? 'Smart Insights' : 'Financial Health Score')),
+            settings: 'Settings & Personas',
+            login: 'Sign In'
+        };
+        const titleName = viewTitles[parentView] || 'Overview Dashboard';
+        document.title = `${titleName} — MindWallet`;
+
+        // Move programmatic focus to new view's <h1> for screen reader announcements
+        const content = document.getElementById('app-content');
+        if (content) {
+            const h1 = content.querySelector('h1');
+            if (h1) {
+                h1.setAttribute('tabindex', '-1');
+                h1.focus();
+            }
+        }
+
+        // Trigger contextual suggestion & coach section visit on route change
+        setTimeout(() => {
+            feedback.checkAndShowContextualSuggestion();
+            coach.onSectionVisit(parentView);
+        }, 800);
     }
 
-    updateActiveNav(hash) {
+    switchSubTab(view, tab) {
+        if (this.activeSubTab[view] !== undefined) {
+            this.activeSubTab[view] = tab;
+        }
+        window.location.hash = `#${tab}`;
+    }
+
+    updateActiveNav(parentView) {
         document.querySelectorAll('.nav-link').forEach(link => {
             const href = link.getAttribute('href');
-            if (href === `#${hash}`) {
+            if (href === `#${parentView}`) {
                 link.classList.add('active');
+                link.setAttribute('aria-current', 'page');
             } else {
                 link.classList.remove('active');
+                link.removeAttribute('aria-current');
             }
         });
-        // Close sidebar on mobile route change
-        document.getElementById('sidebar')?.classList.remove('open');
+
+        // Close mobile drawer on route change
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar?.classList.contains('open')) {
+            sidebar.classList.remove('open');
+            this.updateSidebarA11y(false);
+        }
+    }
+
+    updateSidebarA11y(isOpen) {
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        if (!sidebar) return;
+
+        const user = store.getCurrentUser();
+        if (!user) {
+            sidebar.setAttribute('inert', '');
+            if (menuToggle) menuToggle.setAttribute('aria-expanded', 'false');
+            return;
+        }
+
+        const isMobile = window.innerWidth <= 992;
+        if (isOpen === undefined) {
+            isOpen = sidebar.classList.contains('open');
+        }
+
+        if (menuToggle) {
+            menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        }
+
+        if (isMobile) {
+            if (isOpen) {
+                sidebar.removeAttribute('inert');
+            } else {
+                sidebar.setAttribute('inert', '');
+            }
+        } else {
+            sidebar.removeAttribute('inert');
+        }
     }
 
     updateUserProfileUI() {
@@ -86,6 +208,7 @@ class App {
             document.getElementById('notifDrawer')?.classList.remove('open');
             document.getElementById('profilePanel')?.classList.remove('open');
             document.getElementById('a11yPanel')?.classList.remove('open');
+            this.updateSidebarA11y();
         }
     }
 
@@ -101,24 +224,30 @@ class App {
         }
 
         switch (this.currentView) {
-            case 'dashboard': content.innerHTML = renderDashboard(); break;
-            case 'transactions': content.innerHTML = renderTransactions(); break;
-            case 'budget': content.innerHTML = renderBudget(); break;
-            case 'savings': content.innerHTML = renderSavings(); break;
-            case 'health': content.innerHTML = renderHealth(); break;
-            case 'subscriptions': content.innerHTML = renderSubscriptions(); break;
-            case 'analytics': content.innerHTML = renderAnalytics(); break;
-            case 'insights': content.innerHTML = renderInsights(); break;
-            case 'simulator': content.innerHTML = renderSimulator(); break;
-            case 'reports': content.innerHTML = renderReports(); break;
-            case 'settings': content.innerHTML = renderSettings(); break;
-            case 'login': content.innerHTML = renderLogin(); break;
-            default: content.innerHTML = renderDashboard(); break;
+            case 'dashboard': 
+                content.innerHTML = renderDashboard(); 
+                break;
+            case 'activity': 
+                content.innerHTML = renderActivity(this.activeSubTab.activity, this.selectedReportMonth); 
+                break;
+            case 'plan': 
+                content.innerHTML = renderPlan(this.activeSubTab.plan); 
+                break;
+            case 'insights': 
+                content.innerHTML = renderInsights(this.activeSubTab.insights, this.selectedReportMonth); 
+                break;
+            case 'settings': 
+                content.innerHTML = renderSettings(); 
+                break;
+            default: 
+                content.innerHTML = renderDashboard(); 
+                break;
         }
 
         window.scrollTo(0, 0);
     }
 
+    // --- Settings & Accessibility Controls ---
     setupAccessibilityPanel() {
         const a11yBtn = document.getElementById('a11yBtn');
         const a11yPanel = document.getElementById('a11yPanel');
@@ -132,52 +261,73 @@ class App {
 
             document.addEventListener('click', (e) => {
                 if (!a11yPanel.contains(e.target) && e.target !== a11yBtn) {
-                    a11yPanel.classList.remove('open');
-                    a11yBtn.setAttribute('aria-expanded', 'false');
+                    if (a11yPanel.classList.contains('open')) {
+                        a11yPanel.classList.remove('open');
+                        a11yBtn.setAttribute('aria-expanded', 'false');
+                    }
                 }
             });
         }
 
-        // Toggles
-        document.getElementById('toggleContrast')?.addEventListener('click', () => {
-            const settings = store.getSettings();
-            const val = !settings.highContrast;
-            store.updateSettings({ highContrast: val });
+        // Toolbar Button Bindings
+        document.getElementById('toggleDarkMode')?.addEventListener('click', () => {
+            const s = store.getSettings();
+            store.updateSettings({ darkMode: !s.darkMode });
             this.applySettings(store.getSettings());
+            feedback.showToast(`Dark Mode ${!s.darkMode ? 'Enabled' : 'Disabled'}`);
+        });
+
+        document.getElementById('toggleContrast')?.addEventListener('click', () => {
+            const s = store.getSettings();
+            store.updateSettings({ highContrast: !s.highContrast });
+            this.applySettings(store.getSettings());
+            feedback.showToast(`High Contrast ${!s.highContrast ? 'Enabled' : 'Disabled'}`);
+        });
+
+        document.getElementById('toggleDyslexicFont')?.addEventListener('click', () => {
+            const s = store.getSettings();
+            store.updateSettings({ dyslexicFont: !s.dyslexicFont });
+            this.applySettings(store.getSettings());
+            feedback.showToast(`Dyslexia Font ${!s.dyslexicFont ? 'Enabled' : 'Disabled'}`);
         });
 
         document.getElementById('toggleMotion')?.addEventListener('click', () => {
-            const settings = store.getSettings();
-            const val = !settings.reducedMotion;
-            store.updateSettings({ reducedMotion: val });
+            const s = store.getSettings();
+            store.updateSettings({ reducedMotion: !s.reducedMotion });
             this.applySettings(store.getSettings());
+            feedback.showToast(`Reduced Motion ${!s.reducedMotion ? 'Enabled' : 'Disabled'}`);
         });
 
-        document.getElementById('fontUp')?.addEventListener('click', () => {
-            const settings = store.getSettings();
-            if (settings.fontSizeStep < 4) {
-                store.updateSettings({ fontSizeStep: settings.fontSizeStep + 1 });
-                this.applySettings(store.getSettings());
-            }
-        });
-
-        document.getElementById('fontReset')?.addEventListener('click', () => {
-            store.updateSettings({ fontSizeStep: 0 });
-            this.applySettings(store.getSettings());
-            this.toast('Font size reset to default (16px)', 'info');
-        });
-
-        document.getElementById('fontDown')?.addEventListener('click', () => {
-            const settings = store.getSettings();
-            if (settings.fontSizeStep > -2) {
-                store.updateSettings({ fontSizeStep: settings.fontSizeStep - 1 });
-                this.applySettings(store.getSettings());
-            }
-        });
+        document.getElementById('fontUp')?.addEventListener('click', () => this.adjustFontSize(1));
+        document.getElementById('fontDown')?.addEventListener('click', () => this.adjustFontSize(-1));
+        document.getElementById('fontReset')?.addEventListener('click', () => this.resetFontSize());
 
         document.getElementById('modeSelect')?.addEventListener('change', (e) => {
             this.setMode(e.target.value);
         });
+    }
+
+    adjustFontSize(delta) {
+        const s = store.getSettings();
+        const newStep = Math.max(-2, Math.min(4, (s.fontSizeStep || 0) + delta));
+        store.updateSettings({ fontSizeStep: newStep });
+        this.applySettings(store.getSettings());
+        feedback.showToast(`Text Size: ${100 + newStep * 12.5}%`);
+    }
+
+    resetFontSize() {
+        store.updateSettings({ fontSizeStep: 0 });
+        this.applySettings(store.getSettings());
+        feedback.showToast('Font size reset to default (100%)');
+    }
+
+    toggleDarkMode() {
+        const s = store.getSettings();
+        const val = !s.darkMode;
+        store.updateSettings({ darkMode: val });
+        this.applySettings(store.getSettings());
+        this.renderCurrentView();
+        feedback.showToast(`Dark Mode ${val ? 'Activated' : 'Turned Off'}`);
     }
 
     setMode(mode) {
@@ -193,110 +343,510 @@ class App {
 
         store.updateSettings({ mode, highContrast, fontSizeStep });
         this.applySettings(store.getSettings());
-        this.toast(`Mode updated: ${mode.toUpperCase()}`);
+        feedback.showToast(`Mode: ${mode.toUpperCase()}`);
     }
 
-    setModeFromSettings(mode) {
-        this.setMode(mode);
-        const sel = document.getElementById('modeSelect');
-        if (sel) sel.value = mode;
+    updateTopbarPersonaSelect() {
+        const topbarSelect = document.getElementById('topbarPersonaSelect');
+        if (topbarSelect) {
+            topbarSelect.value = store.getSettings().persona || 'student';
+        }
+    }
+
+    openProfileSwitcherModal() {
+        this.openModal('modal-profile-switcher');
+    }
+
+    switchProfile(personaKey) {
+        this.closeModal();
+        this.handlePersonaChange(personaKey);
+    }
+
+    handlePersonaChange(personaKey) {
+        const previousPersona = store.getSettings().persona || 'student';
+        store.applyPersona(personaKey);
+
+        this.applySettings(store.getSettings());
+        this.renderCurrentView();
+        this.updateUserProfileUI();
+        this.updateTopbarPersonaSelect();
+
+        const currentUser = store.getCurrentUser();
+        feedback.showToast(`Switched to profile: ${currentUser?.name || personaKey}`, 'success');
+
+        // Show what changed coach card with undo capability
+        const changes = onboarding.getChangesDescription(personaKey);
+        coach.onPersonaChanged(
+            previousPersona.replace('_', ' '),
+            personaKey.replace('_', ' '),
+            changes,
+            () => {
+                store.applyPersona(previousPersona);
+                this.applySettings(store.getSettings());
+                this.renderCurrentView();
+                this.updateUserProfileUI();
+                this.updateTopbarPersonaSelect();
+                feedback.showToast(`Reverted back to ${previousPersona}.`, 'info');
+            }
+        );
+    }
+
+    handleCurrencyChange(curr) {
+        store.updateSettings({ currency: curr });
+        this.renderCurrentView();
+        feedback.showToast(`Currency set to ${curr}`);
+    }
+
+    handleIncomeChange(amt) {
+        const num = Number(amt);
+        if (!isNaN(num) && num > 0) {
+            store.updateSettings({ monthlyIncome: num });
+            this.renderCurrentView();
+            feedback.showToast('Monthly income baseline updated');
+        }
+    }
+
+    handleColorblindChange(val) {
+        store.updateSettings({ colorblindMode: val, modifierColorBlind: val !== 'none' });
+        this.applySettings(store.getSettings());
+        this.renderCurrentView();
+        feedback.showToast(`Colorblind palette updated: ${val}`);
+    }
+
+    toggleDarkMode() {
+        const s = store.getSettings();
+        const nextState = !s.darkMode;
+        store.updateSettings({ darkMode: nextState });
+        this.applySettings(store.getSettings());
+        this.renderCurrentView();
+        feedback.showToast(`Dark Mode ${nextState ? 'Enabled' : 'Disabled'}`);
+    }
+
+    handleModifierToggle(key, isChecked) {
+        store.updateSettings({ [key]: isChecked });
+        this.applySettings(store.getSettings());
+        this.renderCurrentView();
+        feedback.showToast(`Preference updated: ${isChecked ? 'Enabled' : 'Disabled'}`);
     }
 
     applySettings(s) {
         const body = document.body;
-        body.classList.remove('high-contrast', 'reduced-motion', 'senior', 'simplified');
+        body.classList.remove(
+            'high-contrast', 'reduced-motion', 'senior', 'simplified', 'dark-mode',
+            'dyslexic-font', 'modifier-dyslexia', 'modifier-low-vision', 'modifier-color-blind', 
+            'modifier-motor', 'modifier-cognitive', 'modifier-screen-reader',
+            'colorblind-protanopia', 'colorblind-deuteranopia', 'colorblind-tritanopia'
+        );
 
-        if (s.highContrast) body.classList.add('high-contrast');
-        if (s.reducedMotion) body.classList.add('reduced-motion');
+        if (s.darkMode) body.classList.add('dark-mode');
+        if (s.highContrast || s.modifierLowVision) body.classList.add('high-contrast', 'modifier-low-vision');
+        if (s.dyslexicFont || s.modifierDyslexia) body.classList.add('dyslexic-font', 'modifier-dyslexia');
+        if (s.reducedMotion) {
+            body.classList.add('reduced-motion');
+            document.documentElement.style.scrollBehavior = 'auto';
+        } else {
+            document.documentElement.style.scrollBehavior = '';
+        }
+
+        // Colorblind palette
+        if (s.colorblindMode && s.colorblindMode !== 'none') {
+            body.classList.add(`colorblind-${s.colorblindMode}`);
+        } else if (s.modifierColorBlind) {
+            body.classList.add('colorblind-deuteranopia');
+        }
+
         if (s.mode === 'senior') body.classList.add('senior', 'simplified');
         if (s.mode === 'simplified') body.classList.add('simplified');
 
-        document.documentElement.style.setProperty('--base-size', (16 + (s.fontSizeStep || 0) * 2) + 'px');
+        // Accessibility Modifier classes
+        if (s.modifierMotor) body.classList.add('modifier-motor');
+        if (s.modifierCognitive) body.classList.add('modifier-cognitive');
+        if (s.modifierScreenReader) body.classList.add('modifier-screen-reader');
+
+        // Font scaling
+        let scalePct = 100 + (s.fontSizeStep || 0) * 12.5;
+        if (s.mode === 'senior' && (s.fontSizeStep === 0 || s.fontSizeStep === undefined || s.fontSizeStep === 2)) {
+            scalePct = 125;
+        }
+        document.documentElement.style.fontSize = `${scalePct}%`;
+
+        const darkBtn = document.getElementById('toggleDarkMode');
+        if (darkBtn) darkBtn.setAttribute('aria-pressed', s.darkMode ? 'true' : 'false');
 
         const contrastBtn = document.getElementById('toggleContrast');
-        if (contrastBtn) contrastBtn.setAttribute('aria-pressed', s.highContrast ? 'true' : 'false');
+        if (contrastBtn) contrastBtn.setAttribute('aria-pressed', (s.highContrast || s.modifierLowVision) ? 'true' : 'false');
+
+        const dyslexiaBtn = document.getElementById('toggleDyslexicFont');
+        if (dyslexiaBtn) dyslexiaBtn.setAttribute('aria-pressed', (s.dyslexicFont || s.modifierDyslexia) ? 'true' : 'false');
 
         const motionBtn = document.getElementById('toggleMotion');
         if (motionBtn) motionBtn.setAttribute('aria-pressed', s.reducedMotion ? 'true' : 'false');
+
+        this.updateTopbarPersonaSelect();
     }
 
     setupGlobalEvents() {
         // Mobile sidebar toggle
-        document.getElementById('menuToggle')?.addEventListener('click', () => {
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        if (menuToggle && sidebar) {
+            menuToggle.addEventListener('click', () => {
+                const open = sidebar.classList.toggle('open');
+                this.updateSidebarA11y(open);
+                if (open) {
+                    const firstLink = sidebar.querySelector('a, button');
+                    if (firstLink) firstLink.focus();
+                }
+            });
+        }
+
+        // Close sidebar on click outside on mobile
+        document.addEventListener('click', (e) => {
             const sidebar = document.getElementById('sidebar');
-            sidebar?.classList.toggle('open');
+            const menuToggle = document.getElementById('menuToggle');
+            if (sidebar?.classList.contains('open') && !sidebar.contains(e.target) && e.target !== menuToggle && !menuToggle?.contains(e.target)) {
+                sidebar.classList.remove('open');
+                this.updateSidebarA11y(false);
+            }
         });
 
-        // Notifications drawer
+        // Notifications drawer toggle
         const notifBtn = document.getElementById('notifBtn');
         const notifDrawer = document.getElementById('notifDrawer');
         if (notifBtn && notifDrawer) {
             notifBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                notifDrawer.classList.toggle('open');
-                store.markAllNotificationsRead();
-                const badge = notifBtn.querySelector('.badge-dot');
-                if (badge) badge.style.display = 'none';
+                const open = notifDrawer.classList.toggle('open');
+                notifBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
             });
 
             document.addEventListener('click', (e) => {
                 if (!notifDrawer.contains(e.target) && e.target !== notifBtn) {
-                    notifDrawer.classList.remove('open');
+                    if (notifDrawer.classList.contains('open')) {
+                        notifDrawer.classList.remove('open');
+                        notifBtn.setAttribute('aria-expanded', 'false');
+                    }
                 }
             });
         }
 
-        // Close modal on escape
+        document.getElementById('markAllNotifsReadBtn')?.addEventListener('click', () => {
+            store.markAllNotificationsRead();
+            this.updateNotificationsUI();
+            feedback.showToast('All notifications marked as read', 'info');
+        });
+
+        // Quick Add Floating Action Button
+        document.getElementById('fabQuickAdd')?.addEventListener('click', () => {
+            this.openQuickAdd();
+        });
+
+        // Quick Add Type Segmented Toggle
+        const quickExpenseBtn = document.getElementById('quick-type-expense');
+        const quickIncomeBtn = document.getElementById('quick-type-income');
+        const quickTypeInput = document.getElementById('quick-add-type');
+        if (quickExpenseBtn && quickIncomeBtn && quickTypeInput) {
+            quickExpenseBtn.addEventListener('click', () => {
+                quickTypeInput.value = 'expense';
+                quickExpenseBtn.classList.add('active');
+                quickIncomeBtn.classList.remove('active');
+            });
+            quickIncomeBtn.addEventListener('click', () => {
+                quickTypeInput.value = 'income';
+                quickIncomeBtn.classList.add('active');
+                quickExpenseBtn.classList.remove('active');
+            });
+        }
+
+        // Global keydown: Escape & Focus Trap
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                this.closeModal();
+                if (this.activeModal) {
+                    if (this.activeModal.id === 'modal-action-dialog') {
+                        feedback.closeDialog();
+                    } else if (this.activeModal.id === 'modal-onboarding') {
+                        onboarding.close();
+                    } else {
+                        this.closeModal();
+                    }
+                    return;
+                }
+                const a11yPanel = document.getElementById('a11yPanel');
+                if (a11yPanel?.classList.contains('open')) {
+                    a11yPanel.classList.remove('open');
+                    document.getElementById('a11yBtn')?.focus();
+                    return;
+                }
+                const notifDrawer = document.getElementById('notifDrawer');
+                if (notifDrawer?.classList.contains('open')) {
+                    notifDrawer.classList.remove('open');
+                    document.getElementById('notifBtn')?.focus();
+                    return;
+                }
+                const profilePanel = document.getElementById('profilePanel');
+                if (profilePanel?.classList.contains('open')) {
+                    profilePanel.classList.remove('open');
+                    document.getElementById('userProfileBtn')?.focus();
+                    return;
+                }
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar?.classList.contains('open')) {
+                    sidebar.classList.remove('open');
+                    this.updateSidebarA11y(false);
+                    document.getElementById('menuToggle')?.focus();
+                    return;
+                }
+            }
+
+            // Modal Focus Trap
+            if (e.key === 'Tab' && this.activeModal) {
+                const focusables = Array.from(this.activeModal.querySelectorAll('button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+                if (!focusables.length) return;
+                const first = focusables[0];
+                const last = focusables[focusables.length - 1];
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault();
+                    last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            }
+        });
+
+        // Action delegation for data buttons in views
+        document.addEventListener('click', (e) => {
+            const actionBtn = e.target.closest('[data-action]');
+            if (!actionBtn) return;
+            const action = actionBtn.getAttribute('data-action');
+            if (action === 'delete-transaction') {
+                const id = actionBtn.getAttribute('data-id');
+                if (id) this.deleteTransaction(id);
+            } else if (action === 'quick-set-budget') {
+                const cat = actionBtn.getAttribute('data-category');
+                const limit = Number(actionBtn.getAttribute('data-limit'));
+                if (cat) this.quickSetBudget(cat, limit);
+            } else if (action === 'deposit-goal') {
+                const id = actionBtn.getAttribute('data-id');
+                const name = actionBtn.getAttribute('data-name');
+                if (id) this.depositGoal(id, name);
+            } else if (action === 'delete-subscription') {
+                const id = actionBtn.getAttribute('data-id');
+                const name = actionBtn.getAttribute('data-name');
+                const amount = Number(actionBtn.getAttribute('data-amount'));
+                if (id) this.deleteSubscription(id, name, amount);
             }
         });
     }
 
-    // Modal Control
+    // --- Modal Management with Focus Restoration ---
     openModal(modalId) {
-        const modal = document.getElementById(`modal-${modalId}`);
-        if (modal) modal.classList.add('open');
+        this.previousActiveElement = document.activeElement;
+        const modal = document.getElementById(modalId) || document.getElementById(`modal-${modalId}`);
+        if (modal) {
+            modal.querySelectorAll('[role="alert"]').forEach(el => {
+                el.textContent = '';
+                el.style.display = 'none';
+            });
+            modal.classList.add('open');
+            this.activeModal = modal;
+            const focusables = modal.querySelectorAll('input:not([type="hidden"]), select, textarea, button');
+            if (focusables.length) {
+                setTimeout(() => focusables[0].focus(), 50);
+            }
+        }
     }
 
-    closeModal() {
-        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+    // --- Quick Add & Dashboard Disclosure Handlers ---
+    openQuickAdd() {
+        const dateInput = document.getElementById('quick-add-date');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+        const amtInput = document.getElementById('quick-add-amount');
+        if (amtInput) amtInput.value = '';
+        const merchInput = document.getElementById('quick-add-merchant');
+        if (merchInput) merchInput.value = '';
+        const errEl = document.getElementById('quick-add-error');
+        if (errEl) errEl.style.display = 'none';
+
+        // Reset type toggle to expense default
+        const typeInput = document.getElementById('quick-add-type');
+        if (typeInput) typeInput.value = 'expense';
+        document.getElementById('quick-type-expense')?.classList.add('active');
+        document.getElementById('quick-type-income')?.classList.remove('active');
+
+        this.openModal('sheet-quick-add');
+        setTimeout(() => {
+            amtInput?.focus();
+        }, 60);
     }
 
-    // Transaction Actions
-    handleAddTransaction(e) {
+    handleQuickAddTransaction(e) {
         e.preventDefault();
-        const merchant = document.getElementById('tx-merchant').value;
-        const category = document.getElementById('tx-category').value;
-        const amount = Number(document.getElementById('tx-amount').value);
-        const type = document.getElementById('tx-type').value;
-        const date = document.getElementById('tx-date').value || new Date().toISOString().split('T')[0];
+        const errEl = document.getElementById('quick-add-error');
+        const amount = Number(document.getElementById('quick-add-amount')?.value);
+        const category = document.getElementById('quick-add-category')?.value || 'Other';
+        const type = document.getElementById('quick-add-type')?.value || 'expense';
+        let merchant = document.getElementById('quick-add-merchant')?.value?.trim();
+        const date = document.getElementById('quick-add-date')?.value || new Date().toISOString().split('T')[0];
 
-        const icons = { Groceries: '🛒', Housing: '🏠', Utilities: '⚡', Subscriptions: '🎬', Entertainment: '🎟️', Transport: '🚇', Income: '💼' };
-        
-        store.addTransaction({
+        if (isNaN(amount) || amount <= 0) {
+            if (errEl) {
+                errEl.textContent = 'Please enter a valid amount greater than ₹0.';
+                errEl.style.display = 'block';
+            }
+            document.getElementById('quick-add-amount')?.focus();
+            return;
+        }
+
+        if (!merchant) {
+            merchant = category;
+        }
+
+        if (errEl) errEl.style.display = 'none';
+
+        const newTx = {
             merchant,
             category,
             amount,
             type,
             date,
-            icon: icons[category] || '💳',
+            icon: CATEGORY_ICONS[category] || '⚡',
             iconBg: type === 'income' ? '#EAF1FC' : '#F4F6F8',
             iconColor: type === 'income' ? 'var(--navy)' : 'var(--text)'
-        });
+        };
+
+        this.processTransactionAdd(newTx);
+    }
+
+    processTransactionAdd(txData) {
+        const category = txData.category || 'Other';
+        const beforeHealth = store.getFinancialHealthScore().overall;
+        const budgets = store.getBudgets();
+        const catBudget = budgets.find(b => (b.category || '').toLowerCase() === category.toLowerCase()) || { limit: 10000 };
+        const monthTxsBefore = store.getMonthTransactions();
+        const beforeSpent = monthTxsBefore
+            .filter(t => t.type === 'expense' && (t.category || '').toLowerCase() === category.toLowerCase())
+            .reduce((s, t) => s + Number(t.amount), 0);
+        const beforeCatPct = Math.round((beforeSpent / catBudget.limit) * 100);
+
+        const newTx = store.addTransaction(txData);
 
         this.closeModal();
         this.renderCurrentView();
-        this.toast('Transaction recorded successfully!', 'success');
+        this.updateNotificationsUI();
+
+        const afterHealth = store.getFinancialHealthScore().overall;
+        const monthTxsAfter = store.getMonthTransactions();
+        const afterSpent = monthTxsAfter
+            .filter(t => t.type === 'expense' && (t.category || '').toLowerCase() === category.toLowerCase())
+            .reduce((s, t) => s + Number(t.amount), 0);
+        const afterCatPct = Math.round((afterSpent / catBudget.limit) * 100);
+
+        coach.onTransactionAdded(newTx, {
+            health: beforeHealth,
+            catPct: beforeCatPct,
+            catSpent: beforeSpent,
+            catLimit: catBudget.limit
+        }, {
+            health: afterHealth,
+            catPct: afterCatPct,
+            catSpent: afterSpent,
+            catLimit: catBudget.limit
+        });
+
+        return newTx;
+    }
+
+    toggleDashboardDetails(targetId, btn) {
+        const target = document.getElementById(targetId);
+        if (!target) return;
+        const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+        const nextState = !isExpanded;
+        btn.setAttribute('aria-expanded', nextState ? 'true' : 'false');
+        target.style.display = nextState ? 'block' : 'none';
+        const spanText = btn.querySelector('span:first-child');
+        if (spanText) {
+            spanText.textContent = nextState ? 'Hide score factors' : 'Show score factors';
+        }
+    }
+
+    closeModal() {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+        this.activeModal = null;
+        if (this.previousActiveElement && typeof this.previousActiveElement.focus === 'function') {
+            this.previousActiveElement.focus();
+            this.previousActiveElement = null;
+        }
+    }
+
+    // Accessible Action Dialog Delegation
+    openActionDialog(config) {
+        feedback.openDialog(config);
+    }
+
+    closeActionDialog() {
+        feedback.closeDialog();
+    }
+
+    handleActionDialogSubmit(e) {
+        feedback.handleDialogSubmit(e);
+    }
+
+    toast(msg, type = 'info', action = null) {
+        feedback.showToast(msg, type, action);
+    }
+
+    // --- Transaction Handlers ---
+    handleAddTransaction(e) {
+        e.preventDefault();
+        const errEl = document.getElementById('tx-error');
+        const merchant = document.getElementById('tx-merchant').value.trim();
+        const category = document.getElementById('tx-category').value;
+        const amount = Number(document.getElementById('tx-amount').value);
+        const type = document.getElementById('tx-type').value;
+        const date = document.getElementById('tx-date').value || new Date().toISOString().split('T')[0];
+
+        if (!merchant) {
+            if (errEl) {
+                errEl.textContent = 'Please enter a merchant or source name.';
+                errEl.style.display = 'block';
+            }
+            document.getElementById('tx-merchant')?.focus();
+            return;
+        }
+
+        if (isNaN(amount) || amount <= 0) {
+            if (errEl) {
+                errEl.textContent = 'Please enter a valid amount greater than ₹0.';
+                errEl.style.display = 'block';
+            }
+            document.getElementById('tx-amount')?.focus();
+            return;
+        }
+
+        if (errEl) errEl.style.display = 'none';
+
+        this.processTransactionAdd({
+            merchant,
+            category,
+            amount,
+            type,
+            date,
+            icon: CATEGORY_ICONS[category] || '💳',
+            iconBg: type === 'income' ? '#EAF1FC' : '#F4F6F8',
+            iconColor: type === 'income' ? 'var(--navy)' : 'var(--text)'
+        });
     }
 
     deleteTransaction(id) {
-        if (confirm('Are you sure you want to delete this transaction?')) {
-            store.deleteTransaction(id);
-            this.renderCurrentView();
-            this.toast('Transaction deleted', 'warning');
-        }
+        const tx = store.getTransactions().find(t => t.id === id);
+        if (!tx) return;
+        store.deleteTransaction(id);
+        this.renderCurrentView();
+        this.updateNotificationsUI();
+        coach.onTransactionDeleted(tx);
     }
 
     filterTransactions() {
@@ -307,13 +857,11 @@ class App {
         let txs = store.getTransactions();
 
         if (query) {
-            txs = txs.filter(t => t.merchant.toLowerCase().includes(query) || t.category.toLowerCase().includes(query));
+            txs = txs.filter(t => (t.merchant || '').toLowerCase().includes(query) || (t.category || '').toLowerCase().includes(query));
         }
-
         if (cat !== 'all') {
-            txs = txs.filter(t => t.category.toLowerCase() === cat.toLowerCase());
+            txs = txs.filter(t => (t.category || '').toLowerCase() === cat.toLowerCase());
         }
-
         if (type !== 'all') {
             txs = txs.filter(t => t.type === type);
         }
@@ -324,34 +872,95 @@ class App {
         }
     }
 
-    // Budget Actions
+    // --- Budget Handlers ---
     handleSetBudget(e) {
         e.preventDefault();
+        const errEl = document.getElementById('budget-error');
         const cat = document.getElementById('budget-category').value;
         const limit = Number(document.getElementById('budget-limit').value);
+
+        if (isNaN(limit) || limit <= 0) {
+            if (errEl) {
+                errEl.textContent = 'Please enter a valid monthly limit greater than ₹0.';
+                errEl.style.display = 'block';
+            }
+            document.getElementById('budget-limit')?.focus();
+            return;
+        }
+
+        if (errEl) errEl.style.display = 'none';
 
         store.updateBudget(cat, limit);
         this.closeModal();
         this.renderCurrentView();
-        this.toast(`Budget limit updated for ${cat}!`, 'success');
+        this.updateNotificationsUI();
+        feedback.showToast(`Budget limit updated for ${cat}!`, 'success');
     }
 
     quickSetBudget(category, currentLimit) {
-        const newLimit = prompt(`Enter new monthly budget limit for ${category}:`, currentLimit);
-        if (newLimit && !isNaN(newLimit)) {
-            store.updateBudget(category, Number(newLimit));
-            this.renderCurrentView();
-            this.toast(`Updated ${category} budget to ${store.getSettings().currency}${Number(newLimit).toLocaleString()}`, 'success');
-        }
+        feedback.openDialog({
+            title: `Adjust Budget: ${category}`,
+            message: `Set the monthly spending threshold for ${category}.`,
+            mode: 'prompt',
+            inputType: 'number',
+            inputValue: currentLimit,
+            inputLabel: 'Monthly Threshold (₹)',
+            confirmText: 'Save Budget',
+            onConfirm: (val) => {
+                const num = Number(val);
+                if (!val || isNaN(num) || num <= 0) {
+                    const errEl = document.getElementById('action-dialog-error');
+                    if (errEl) {
+                        errEl.textContent = 'Please enter a valid amount greater than ₹0.';
+                        errEl.style.display = 'block';
+                    }
+                    return false;
+                }
+                store.updateBudget(category, num);
+                this.renderCurrentView();
+                coach.onBudgetUpdated(category, currentLimit, num);
+                return true;
+            }
+        });
     }
 
-    // Savings Actions
+    // --- Savings Goal Handlers ---
     handleAddGoal(e) {
         e.preventDefault();
-        const name = document.getElementById('goal-name').value;
+        const errEl = document.getElementById('goal-error');
+        const name = document.getElementById('goal-name').value.trim();
         const target = Number(document.getElementById('goal-target').value);
         const monthlyContribution = Number(document.getElementById('goal-monthly').value);
         const category = document.getElementById('goal-category').value;
+
+        if (!name) {
+            if (errEl) {
+                errEl.textContent = 'Please enter a goal name.';
+                errEl.style.display = 'block';
+            }
+            document.getElementById('goal-name')?.focus();
+            return;
+        }
+
+        if (isNaN(target) || target <= 0) {
+            if (errEl) {
+                errEl.textContent = 'Please enter a target amount greater than ₹0.';
+                errEl.style.display = 'block';
+            }
+            document.getElementById('goal-target')?.focus();
+            return;
+        }
+
+        if (isNaN(monthlyContribution) || monthlyContribution <= 0) {
+            if (errEl) {
+                errEl.textContent = 'Please enter a monthly contribution greater than ₹0.';
+                errEl.style.display = 'block';
+            }
+            document.getElementById('goal-monthly')?.focus();
+            return;
+        }
+
+        if (errEl) errEl.style.display = 'none';
 
         store.addGoal({
             name,
@@ -359,31 +968,81 @@ class App {
             current: 0,
             monthlyContribution,
             category,
-            icon: '🎯'
+            icon: CATEGORY_ICONS[category] || '🎯'
         });
 
         this.closeModal();
         this.renderCurrentView();
-        this.toast(`Savings Goal "${name}" created!`, 'success');
+        this.updateNotificationsUI();
+        feedback.showToast(`Savings Goal "${name}" created!`, 'success');
     }
 
     depositGoal(id, name) {
-        const amt = prompt(`Enter deposit amount for "${name}":`, '1000');
-        if (amt && !isNaN(amt)) {
-            store.updateGoalDeposit(id, Number(amt));
-            this.renderCurrentView();
-            this.toast(`Deposited ${store.getSettings().currency}${Number(amt).toLocaleString()} into ${name}!`, 'success');
-        }
+        feedback.openDialog({
+            title: `Deposit to ${name}`,
+            message: `Enter the amount to deposit into your "${name}" fund today.`,
+            mode: 'prompt',
+            inputType: 'number',
+            inputValue: '1000',
+            inputLabel: 'Deposit Amount (₹)',
+            confirmText: 'Add Deposit',
+            onConfirm: (val) => {
+                const num = Number(val);
+                if (!val || isNaN(num) || num <= 0) {
+                    const errEl = document.getElementById('action-dialog-error');
+                    if (errEl) {
+                        errEl.textContent = 'Please enter a deposit greater than ₹0.';
+                        errEl.style.display = 'block';
+                    }
+                    return false;
+                }
+                const g = store.updateGoalDeposit(id, num);
+                this.renderCurrentView();
+                const newPct = g ? Math.min(100, Math.round((g.current / g.target) * 100)) : 100;
+                coach.onGoalDeposited(id, name, num, newPct);
+                return true;
+            }
+        });
     }
 
-    // Subscription Actions
+    // --- Subscription Handlers ---
     handleAddSubscription(e) {
         e.preventDefault();
-        const name = document.getElementById('sub-name').value;
+        const errEl = document.getElementById('sub-error');
+        const name = document.getElementById('sub-name').value.trim();
         const category = document.getElementById('sub-category').value;
         const amount = Number(document.getElementById('sub-amount').value);
         const cycle = document.getElementById('sub-cycle').value;
         const nextBilling = document.getElementById('sub-next').value;
+
+        if (!name) {
+            if (errEl) {
+                errEl.textContent = 'Please enter a service name.';
+                errEl.style.display = 'block';
+            }
+            document.getElementById('sub-name')?.focus();
+            return;
+        }
+
+        if (isNaN(amount) || amount <= 0) {
+            if (errEl) {
+                errEl.textContent = 'Please enter a recurring charge greater than ₹0.';
+                errEl.style.display = 'block';
+            }
+            document.getElementById('sub-amount')?.focus();
+            return;
+        }
+
+        if (!nextBilling) {
+            if (errEl) {
+                errEl.textContent = 'Please select a renewal date.';
+                errEl.style.display = 'block';
+            }
+            document.getElementById('sub-next')?.focus();
+            return;
+        }
+
+        if (errEl) errEl.style.display = 'none';
 
         store.addSubscription({
             name,
@@ -392,71 +1051,366 @@ class App {
             cycle,
             nextBilling,
             status: 'Active',
-            icon: '📦'
+            icon: CATEGORY_ICONS[category] || '📦'
         });
 
         this.closeModal();
         this.renderCurrentView();
-        this.toast(`Subscription "${name}" added!`, 'success');
+        this.updateNotificationsUI();
+        feedback.showToast(`Subscription "${name}" tracked!`, 'success');
     }
 
     deleteSubscription(id, name, amount) {
-        if (confirm(`Cancel/Pause subscription for "${name}"? This will save ${store.getSettings().currency}${amount}/cycle.`)) {
-            store.deleteSubscription(id);
-            this.renderCurrentView();
-            this.toast(`Subscription canceled! You saved ${store.getSettings().currency}${amount}`, 'success');
-        }
+        const sub = store.getSubscriptions().find(s => s.id === id);
+        if (!sub) return;
+        feedback.openDialog({
+            title: 'Delete Subscription',
+            message: `Are you sure you want to stop tracking "${name}" (₹${amount.toLocaleString()})?`,
+            mode: 'confirm',
+            confirmText: 'Delete Subscription',
+            isDanger: true,
+            onConfirm: () => {
+                store.deleteSubscription(id);
+                this.renderCurrentView();
+                this.updateNotificationsUI();
+                coach.onSubscriptionDeleted(sub);
+                return true;
+            }
+        });
     }
 
-    // Purchase Simulator Engine
+    // --- Purchase Simulator Engine with Before/After Health Score ---
     runSimulation(e) {
         e.preventDefault();
-        const name = document.getElementById('sim-item').value;
+        const errEl = document.getElementById('sim-error');
+        const name = document.getElementById('sim-item').value.trim();
         const price = Number(document.getElementById('sim-price').value);
         const category = document.getElementById('sim-category').value;
         const priority = document.getElementById('sim-priority').value;
+        const selectedGoalId = document.getElementById('sim-goal')?.value || null;
 
-        const sim = store.simulatePurchase(price, category, priority);
+        if (!name) {
+            if (errEl) {
+                errEl.textContent = 'Please enter an item name.';
+                errEl.style.display = 'block';
+            }
+            document.getElementById('sim-item')?.focus();
+            return;
+        }
+
+        if (isNaN(price) || price <= 0) {
+            if (errEl) {
+                errEl.textContent = 'Please enter a price greater than ₹0.';
+                errEl.style.display = 'block';
+            }
+            document.getElementById('sim-price')?.focus();
+            return;
+        }
+
+        if (errEl) errEl.style.display = 'none';
+
+        const sim = store.simulatePurchase(price, category, priority, selectedGoalId);
         const currency = store.getSettings().currency;
 
         const cardContent = document.getElementById('sim-result-content');
         if (cardContent) {
+            const isNegative = sim.moneyLeftAfter < 0;
+            const healthDiff = sim.healthAfter - sim.healthBefore;
+
             cardContent.innerHTML = `
-                <div style="background:var(--bg); padding:16px; border-radius:12px; border-left:4px solid var(--emerald);">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3 style="font-size:1.1rem; font-weight:700;">${name}</h3>
-                        <span class="${sim.recommendationClass}" style="font-size:0.9rem; font-weight:700; padding:4px 12px; border-radius:20px; background:var(--surface);">
+                <div style="background:var(--bg); padding:16px 20px; border-radius:12px; border-left:5px solid ${isNegative ? 'var(--status-critical)' : 'var(--accent)'}; border:1px solid var(--border);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <div>
+                            <span style="font-size:var(--text-xs); color:var(--text-muted); text-transform:uppercase; font-weight:700;">Simulated Purchase</span>
+                            <h3 style="font-size:1.25rem; font-weight:700; margin:2px 0 0;">${escapeHtml(name)}</h3>
+                        </div>
+                        <span class="${sim.recommendationClass}">
                             ${sim.recommendation}
                         </span>
                     </div>
-                    <div style="font-size:1.5rem; font-weight:700; color:var(--navy); margin-top:6px;">
+                    <div style="font-size:1.6rem; font-weight:700; color:var(--navy); margin-top:6px;">
                         ${currency}${sim.price.toLocaleString()}
                     </div>
                 </div>
 
+                <!-- Price Impact & Net Balance Metrics -->
                 <div class="grid-2">
-                    <div style="background:var(--bg); padding:14px; border-radius:10px;">
-                        <div style="font-size:0.8rem; color:var(--text-muted);">Net Balance After Purchase</div>
-                        <div style="font-size:1.2rem; font-weight:700; color:${sim.netAfter < 0 ? 'var(--red)' : 'var(--text)'};">
-                            ${currency}${sim.netAfter.toLocaleString()}
+                    <div style="background:var(--bg); padding:14px; border-radius:10px; border:1px solid var(--border);">
+                        <div style="font-size:var(--text-xs); color:var(--text-muted); font-weight:600;">Price Impact on Income</div>
+                        <div style="font-size:1.3rem; font-weight:700; color:var(--text); margin-top:4px;">
+                            ${sim.priceImpactPct}% <span style="font-size:0.8rem; font-weight:500; color:var(--text-muted);">of monthly income</span>
                         </div>
                     </div>
-                    <div style="background:var(--bg); padding:14px; border-radius:10px;">
-                        <div style="font-size:0.8rem; color:var(--text-muted);">Savings Goal Delay</div>
-                        <div style="font-size:1.2rem; font-weight:700; color:var(--orange);">
+
+                    <div style="background:var(--bg); padding:14px; border-radius:10px; border:1px solid var(--border);">
+                        <div style="font-size:var(--text-xs); color:var(--text-muted); font-weight:600;">Net Balance After Purchase</div>
+                        <div style="font-size:1.3rem; font-weight:700; color:${sim.moneyLeftAfter < 0 ? 'var(--status-critical-text)' : 'var(--status-healthy-text)'}; margin-top:4px;">
+                            ${currency}${sim.moneyLeftAfter.toLocaleString()}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health Score Before vs After Metric -->
+                <div class="grid-2">
+                    <div style="background:var(--bg); padding:14px; border-radius:10px; border:1px solid var(--border);">
+                        <div style="font-size:var(--text-xs); color:var(--text-muted); font-weight:600;">Financial Health Score Impact</div>
+                        <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+                            <span style="font-size:1.3rem; font-weight:700;">${sim.healthBefore}</span>
+                            <span style="font-size:1.1rem; color:var(--text-muted);">➔</span>
+                            <span style="font-size:1.3rem; font-weight:700; color:${healthDiff < 0 ? 'var(--status-critical-text)' : 'var(--status-healthy-text)'};">${sim.healthAfter}</span>
+                            <span class="status-pill ${healthDiff < 0 ? 'critical' : 'healthy'}" style="font-size:0.75rem;">
+                                ${healthDiff <= 0 ? healthDiff : '+' + healthDiff} pts
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style="background:var(--bg); padding:14px; border-radius:10px; border:1px solid var(--border);">
+                        <div style="font-size:var(--text-xs); color:var(--text-muted); font-weight:600;">Delay on "${escapeHtml(sim.goalName)}"</div>
+                        <div style="font-size:1.3rem; font-weight:700; color:var(--status-warning-text); margin-top:4px;">
                             +${sim.delayDays} Days
                         </div>
                     </div>
                 </div>
 
-                <div style="background:var(--navy-light); border:1px solid rgba(16,35,63,0.1); padding:16px; border-radius:12px;">
-                    <h4 style="font-size:0.9rem; font-weight:700; margin-bottom:4px;">💡 Cognitive HCI Feedback</h4>
-                    <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">
+                <!-- Category Budget Impact -->
+                <div style="background:var(--bg); padding:14px; border-radius:10px; border:1px solid var(--border);">
+                    <div style="font-size:var(--text-xs); color:var(--text-muted); font-weight:600; margin-bottom:4px;">
+                        ${escapeHtml(category)} Category Budget Impact
+                    </div>
+                    <div style="font-size:var(--text-sm);">
+                        Remaining before purchase: <strong>${currency}${sim.remainingCatBudgetBefore.toLocaleString()}</strong> ➔ 
+                        After: <strong style="color:${sim.remainingCatBudgetAfter < 0 ? 'var(--status-critical-text)' : 'var(--status-healthy-text)'};">${currency}${sim.remainingCatBudgetAfter.toLocaleString()}</strong>
+                        ${sim.willExceedBudget ? '<span class="status-pill critical" style="margin-left:6px;">Exceeds Budget</span>' : ''}
+                    </div>
+                </div>
+
+                ${sim.coolingActive ? `
+                    <div style="background:#FFFBEB; border:1px solid #FCD34D; border-left:4px solid #F59E0B; padding:12px 16px; border-radius:10px; font-size:var(--text-xs);">
+                        <div style="font-weight:700; color:#92400E; display:flex; align-items:center; gap:6px; margin-bottom:2px;">
+                            <span aria-hidden="true">⏱️</span> ${sim.coolingHours}-Hour Deliberation Window Active
+                        </div>
+                        <div style="color:#78350F; line-height:1.45;">
+                            Alex's Impulse Control profile recommends pausing before buying non-essential items. Deliberating for 24 hours protects your savings cushion and reinforces positive spending discipline!
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- Cognitive HCI Guidance -->
+                <div style="background:var(--navy-light); border:1px solid var(--border-strong); padding:16px; border-radius:12px;">
+                    <div style="font-size:var(--text-sm); font-weight:700; display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                        <span aria-hidden="true">💡</span> Cognitive HCI Decision Recommendation
+                    </div>
+                    <p style="font-size:var(--text-sm); color:var(--text); margin:0; line-height:1.45;">
                         ${sim.hciAdvice}
                     </p>
                 </div>
             `;
         }
+    }
+
+    // --- Global Real-Time Search Engine ---
+    setupGlobalSearch() {
+        const input = document.getElementById('global-search');
+        const dropdown = document.getElementById('global-search-results');
+        if (!input || !dropdown) return;
+
+        let selectedIndex = -1;
+
+        const hideDropdown = () => {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+            selectedIndex = -1;
+        };
+
+        const performSearch = (q) => {
+            const query = q.trim().toLowerCase();
+            if (query.length < 1) {
+                hideDropdown();
+                return;
+            }
+
+            const txs = store.getTransactions().filter(t => 
+                (t.merchant || '').toLowerCase().includes(query) || 
+                (t.category || '').toLowerCase().includes(query) ||
+                String(t.amount).includes(query)
+            ).slice(0, 4);
+
+            const budgets = store.getBudgets().filter(b => 
+                (b.category || '').toLowerCase().includes(query) ||
+                String(b.limit).includes(query)
+            ).slice(0, 3);
+
+            const goals = store.getGoals().filter(g => 
+                (g.name || '').toLowerCase().includes(query) || 
+                (g.category || '').toLowerCase().includes(query)
+            ).slice(0, 3);
+
+            if (!txs.length && !budgets.length && !goals.length) {
+                dropdown.innerHTML = `<div style="padding:12px; text-align:center; color:var(--text-muted); font-size:var(--text-sm);">No results for "${escapeHtml(q)}"</div>`;
+                dropdown.style.display = 'block';
+                return;
+            }
+
+            const currency = store.getSettings().currency;
+            let html = '';
+
+            if (txs.length) {
+                html += `<div class="search-results-group">Transactions</div>`;
+                txs.forEach(t => {
+                    html += `
+                        <div class="search-result-item" role="option" data-type="tx" data-query="${escapeHtml(t.merchant)}" tabindex="0">
+                            <div class="search-result-item-left">
+                                <span aria-hidden="true">${t.icon || '💳'}</span>
+                                <strong>${escapeHtml(t.merchant)}</strong>
+                                <span class="search-result-meta">(${escapeHtml(t.category)})</span>
+                            </div>
+                            <span style="font-weight:700; color:${t.type === 'income' ? 'var(--emerald)' : 'var(--text)'};">
+                                ${t.type === 'income' ? '+' : '-'}${currency}${Number(t.amount).toLocaleString()}
+                            </span>
+                        </div>
+                    `;
+                });
+            }
+
+            if (budgets.length) {
+                html += `<div class="search-results-group">Budgets</div>`;
+                budgets.forEach(b => {
+                    html += `
+                        <div class="search-result-item" role="option" data-type="budget" tabindex="0">
+                            <div class="search-result-item-left">
+                                <span aria-hidden="true">${b.icon || '📌'}</span>
+                                <strong>${escapeHtml(b.category)} Budget</strong>
+                            </div>
+                            <span class="search-result-meta">Limit: ${currency}${b.limit.toLocaleString()}/mo</span>
+                        </div>
+                    `;
+                });
+            }
+
+            if (goals.length) {
+                html += `<div class="search-results-group">Savings Goals</div>`;
+                goals.forEach(g => {
+                    html += `
+                        <div class="search-result-item" role="option" data-type="goal" tabindex="0">
+                            <div class="search-result-item-left">
+                                <span aria-hidden="true">${g.icon || '🎯'}</span>
+                                <strong>${escapeHtml(g.name)}</strong>
+                            </div>
+                            <span class="search-result-meta">Target: ${currency}${g.target.toLocaleString()}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            dropdown.innerHTML = html;
+            dropdown.style.display = 'block';
+
+            dropdown.querySelectorAll('.search-result-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const type = item.getAttribute('data-type');
+                    if (type === 'tx') {
+                        window.location.hash = '#transactions';
+                        setTimeout(() => {
+                            const txSearch = document.getElementById('tx-search-input');
+                            if (txSearch) {
+                                txSearch.value = item.getAttribute('data-query') || '';
+                                this.filterTransactions();
+                            }
+                        }, 100);
+                    } else if (type === 'budget') {
+                        window.location.hash = '#budget';
+                    } else if (type === 'goal') {
+                        window.location.hash = '#savings';
+                    }
+                    hideDropdown();
+                    input.value = '';
+                });
+            });
+        };
+
+        input.addEventListener('input', (e) => performSearch(e.target.value));
+
+        input.addEventListener('keydown', (e) => {
+            const items = dropdown.querySelectorAll('.search-result-item');
+            if (dropdown.style.display === 'block' && items.length) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = (selectedIndex + 1) % items.length;
+                    items.forEach((it, idx) => it.classList.toggle('selected', idx === selectedIndex));
+                    items[selectedIndex]?.scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+                    items.forEach((it, idx) => it.classList.toggle('selected', idx === selectedIndex));
+                    items[selectedIndex]?.scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (selectedIndex >= 0 && items[selectedIndex]) {
+                        items[selectedIndex].click();
+                    } else if (items[0]) {
+                        items[0].click();
+                    }
+                } else if (e.key === 'Escape') {
+                    hideDropdown();
+                }
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!dropdown.contains(e.target) && e.target !== input) {
+                hideDropdown();
+            }
+        });
+    }
+
+    // --- Dynamic Notifications Drawer & Badge ---
+    updateNotificationsUI() {
+        const badgeDot = document.getElementById('notifBadgeDot');
+        const badgeText = document.getElementById('notifBadgeText');
+        const drawerContent = document.getElementById('notifDrawerContent');
+        const notifs = store.getNotifications();
+        const unreadCount = store.getUnreadNotificationCount();
+
+        if (badgeDot) {
+            badgeDot.style.display = unreadCount > 0 ? 'block' : 'none';
+        }
+        if (badgeText) {
+            badgeText.textContent = `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`;
+        }
+
+        if (drawerContent) {
+            if (!notifs.length) {
+                drawerContent.innerHTML = `<p class="notif-empty-msg" style="padding:24px 16px; text-align:center; color:var(--text-muted); font-size:var(--text-sm);">No active alerts. All budgets and subscriptions on track!</p>`;
+            } else {
+                const levelBadges = {
+                    critical: '<span class="status-pill critical" style="font-size:0.68rem; padding:2px 6px;">Alert</span>',
+                    warning: '<span class="status-pill warning" style="font-size:0.68rem; padding:2px 6px;">Warning</span>',
+                    info: '<span class="status-pill info" style="font-size:0.68rem; padding:2px 6px;">Upcoming</span>',
+                    success: '<span class="status-pill healthy" style="font-size:0.68rem; padding:2px 6px;">Milestone</span>'
+                };
+                drawerContent.innerHTML = notifs.map(n => {
+                    const level = n.level || 'info';
+                    const badge = levelBadges[level] || '';
+                    return `
+                        <a href="${n.route || '#dashboard'}" class="notif-item notif-${level}" onclick="document.getElementById('notifDrawer')?.classList.remove('open')">
+                            <div class="notif-item-header">
+                                <div class="notif-item-title">
+                                    <span class="notif-item-icon" aria-hidden="true">${n.icon || '🔔'}</span>
+                                    <span>${escapeHtml(n.title)}</span>
+                                </div>
+                                ${badge}
+                            </div>
+                            <div class="notif-item-message">${escapeHtml(n.message)}</div>
+                        </a>
+                    `;
+                }).join('');
+            }
+        }
+    }
+
+    handleReportMonthChange(monthStr) {
+        this.selectedReportMonth = monthStr;
+        this.renderCurrentView();
     }
 
     setupProfilePanel() {
@@ -466,12 +1420,16 @@ class App {
         if (profileBtn && profilePanel) {
             profileBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                profilePanel.classList.toggle('open');
+                const open = profilePanel.classList.toggle('open');
+                profileBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
             });
 
             document.addEventListener('click', (e) => {
                 if (!profilePanel.contains(e.target) && e.target !== profileBtn) {
-                    profilePanel.classList.remove('open');
+                    if (profilePanel.classList.contains('open')) {
+                        profilePanel.classList.remove('open');
+                        profileBtn.setAttribute('aria-expanded', 'false');
+                    }
                 }
             });
         }
@@ -496,71 +1454,205 @@ class App {
         }
     }
 
-    handleLoginSubmit(e) {
-        e.preventDefault();
-        const email = document.getElementById('login-email').value;
-        const pass = document.getElementById('login-password').value;
+    togglePasswordVisibility(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        if (btn) {
+            btn.innerHTML = isPassword ? '<span aria-hidden="true">🙈</span> <span>Hide</span>' : '<span aria-hidden="true">👁️</span> <span>Show</span>';
+            btn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+        }
+    }
 
-        const user = store.login(email, pass);
-        this.toast(`Welcome back, ${user.name}!`, 'success');
+    onLoginPersonaSelect(personaKey) {
+        const emailInput = document.getElementById('login-email');
+        const emailMap = {
+            student: 'alex@mindwallet.local',
+            working_professional: 'priya@mindwallet.local',
+            elderly_retiree: 'eleanor@mindwallet.local',
+            goal_saver: 'rohan@mindwallet.local'
+        };
+        if (emailInput && emailMap[personaKey]) {
+            emailInput.value = emailMap[personaKey];
+        }
+    }
+
+    handleQuickPersonaLogin(personaKey) {
+        store.applyPersona(personaKey, {}, false);
+        this.applySettings(store.getSettings());
+        this.updateUserProfileUI();
+        this.updateSidebarA11y();
+        this.updateTopbarPersonaSelect();
+        const user = store.getCurrentUser();
+        feedback.showToast(`Signed in as ${user?.name || personaKey}`, 'success');
         window.location.hash = '#dashboard';
         this.handleRoute();
+    }
+
+    handleLoginSubmit(e) {
+        e.preventDefault();
+        const alertEl = document.getElementById('auth-alert');
+        try {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            const personaRole = document.getElementById('login-persona')?.value || null;
+
+            const user = store.login(email, pass, personaRole);
+            if (alertEl) alertEl.style.display = 'none';
+            this.applySettings(store.getSettings());
+            this.updateUserProfileUI();
+            this.updateSidebarA11y();
+            feedback.showToast(`Welcome back, ${user.name}!`, 'success');
+            window.location.hash = '#dashboard';
+            this.handleRoute();
+        } catch (err) {
+            if (alertEl) {
+                alertEl.style.display = 'block';
+                alertEl.style.background = 'var(--status-critical-bg)';
+                alertEl.style.color = 'var(--status-critical-text)';
+                alertEl.style.border = '1px solid var(--status-critical-border)';
+                alertEl.textContent = err.message || 'Login failed. Please check your credentials.';
+            }
+        }
     }
 
     handleRegisterSubmit(e) {
         e.preventDefault();
-        const name = document.getElementById('reg-name').value;
-        const email = document.getElementById('reg-email').value;
-        const role = document.getElementById('reg-role').value;
+        const alertEl = document.getElementById('auth-alert');
+        try {
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const personaRole = document.getElementById('reg-role').value;
 
-        const user = store.register(name, email, role);
-        this.toast(`Account created! Welcome, ${user.name}.`, 'success');
-        window.location.hash = '#dashboard';
-        this.handleRoute();
+            const user = store.register(name, email, personaRole, personaRole);
+            if (alertEl) alertEl.style.display = 'none';
+
+            this.applySettings(store.getSettings());
+            this.updateUserProfileUI();
+            this.updateSidebarA11y();
+            this.updateTopbarPersonaSelect();
+
+            feedback.showToast(`Account created for ${user.name}!`, 'success');
+            window.location.hash = '#dashboard';
+            this.handleRoute();
+
+            setTimeout(() => {
+                onboarding.open(1);
+            }, 600);
+        } catch (err) {
+            if (alertEl) {
+                alertEl.style.display = 'block';
+                alertEl.style.background = 'var(--status-critical-bg)';
+                alertEl.style.color = 'var(--status-critical-text)';
+                alertEl.style.border = '1px solid var(--status-critical-border)';
+                alertEl.textContent = err.message || 'Registration failed.';
+            }
+        }
     }
 
     handleGuestLoginSubmit() {
         const user = store.loginAsGuest();
-        this.toast(`Signed in as Demo Guest (${user.name})`, 'info');
+        this.updateUserProfileUI();
+        this.updateSidebarA11y();
+        feedback.showToast(`Signed in as Demo User (${user.name})`, 'info');
         window.location.hash = '#dashboard';
         this.handleRoute();
     }
 
     handleLogout() {
-        if (confirm('Are you sure you want to sign out?')) {
-            store.logout();
-            document.getElementById('profilePanel')?.classList.remove('open');
-            this.toast('Signed out successfully', 'info');
-            window.location.hash = '#login';
-            this.handleRoute();
+        feedback.openDialog({
+            title: 'Sign Out',
+            message: 'Are you sure you want to sign out of MindWallet?',
+            mode: 'confirm',
+            confirmText: 'Sign Out',
+            isDanger: true,
+            onConfirm: () => {
+                store.logout();
+                document.getElementById('profilePanel')?.classList.remove('open');
+                this.updateUserProfileUI();
+                this.updateSidebarA11y();
+                feedback.showToast('Signed out successfully.', 'info');
+                window.location.hash = '#login';
+                this.handleRoute();
+                return true;
+            }
+        });
+    }
+
+    handleExportData() {
+        try {
+            const dataStr = store.exportData();
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const dateStr = new Date().toISOString().split('T')[0];
+            a.href = url;
+            a.download = `mindwallet_backup_${dateStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            feedback.showToast('Backup downloaded successfully (JSON).', 'success');
+        } catch (err) {
+            console.error('Export failed', err);
+            feedback.showToast('Failed to export backup.', 'danger');
         }
+    }
+
+    handleImportDataFile(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const content = event.target?.result;
+                store.importData(content);
+                this.applySettings(store.getSettings());
+                this.updateUserProfileUI();
+                this.updateTopbarPersonaSelect();
+                this.renderCurrentView();
+                this.updateNotificationsUI();
+                feedback.showToast('Data imported successfully!', 'success');
+            } catch (err) {
+                console.error('Import error', err);
+                feedback.showToast(`Import error: ${err.message}`, 'danger');
+            }
+        };
+        reader.onerror = () => {
+            feedback.showToast('Failed to read selected file.', 'danger');
+        };
+        reader.readAsText(file);
+        e.target.value = '';
     }
 
     resetData() {
-        if (confirm('Are you sure you want to reset all data back to initial sample state?')) {
-            store.resetAllData();
-            this.applySettings(store.getSettings());
-            this.renderCurrentView();
-            this.toast('All sample data has been reset!', 'warning');
-        }
-    }
-
-    toast(msg, type = 'info') {
-        const container = document.getElementById('toastContainer');
-        if (!container) return;
-
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `<span>💬</span><span>${msg}</span>`;
-        container.appendChild(toast);
-
-        setTimeout(() => {
-            toast.remove();
-        }, 3000);
+        feedback.openDialog({
+            title: 'Factory Reset All Data',
+            message: 'Are you sure you want to restore the initial starter data? All custom transactions, budgets, goals, and customized settings will be reset to defaults.',
+            mode: 'confirm',
+            confirmText: 'Reset Everything',
+            isDanger: true,
+            onConfirm: () => {
+                store.resetAllData();
+                this.applySettings(store.getSettings());
+                this.renderCurrentView();
+                this.updateUserProfileUI();
+                this.updateTopbarPersonaSelect();
+                this.updateNotificationsUI();
+                feedback.showToast('Sample data reset to clean baseline.', 'warning');
+                return true;
+            }
+        });
     }
 }
 
-// Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', () => {
+// Global initialization
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.app = new App();
+    });
+} else {
     window.app = new App();
-});
+}

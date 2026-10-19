@@ -9,7 +9,9 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap"
+        rel="stylesheet">
 
     <!-- Design System Stylesheet -->
     <link rel="stylesheet" href="css/style.css">
@@ -21,10 +23,11 @@
 
     <div class="app">
         <!-- Sidebar Navigation Drawer -->
-        <aside class="sidebar" id="sidebar" aria-label="Main Navigation">
+        <aside class="sidebar" id="sidebar" aria-label="Sidebar Navigation">
             <div class="brand">
                 <div class="brand-mark" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                        stroke-linejoin="round">
                         <rect x="2" y="5" width="20" height="14" rx="3"></rect>
                         <line x1="2" y1="10" x2="22" y2="10"></line>
                     </svg>
@@ -35,55 +38,40 @@
                 </div>
             </div>
 
-            <div class="nav-section-title">Core Platform</div>
-            <nav class="primary-nav">
-                <a href="#dashboard" class="nav-link active" id="nav-dashboard">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
-                    <span>Dashboard</span>
+            <!-- Primary Navigation (5 Parents) -->
+            <nav class="primary-nav" aria-label="Primary Navigation">
+                <a href="#dashboard" class="nav-link active" id="nav-dashboard" aria-current="page">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    </svg>
+                    <span>Home</span>
                 </a>
-                <a href="#transactions" class="nav-link" id="nav-transactions">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                    <span>Tracker</span>
+                <a href="#activity" class="nav-link" id="nav-activity">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    <span>Activity</span>
                 </a>
-                <a href="#budget" class="nav-link" id="nav-budget">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
-                    <span>Budget Planner</span>
-                </a>
-                <a href="#savings" class="nav-link" id="nav-savings">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path></svg>
-                    <span>Savings Goals</span>
-                </a>
-                <a href="#health" class="nav-link" id="nav-health">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
-                    <span>Health Score</span>
-                </a>
-            </nav>
-
-            <div class="nav-section-title">Decision Tools</div>
-            <nav class="primary-nav">
-                <a href="#subscriptions" class="nav-link" id="nav-subscriptions">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                    <span>Subscriptions</span>
-                </a>
-                <a href="#analytics" class="nav-link" id="nav-analytics">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                    <span>Analytics</span>
+                <a href="#plan" class="nav-link" id="nav-plan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                        <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                    </svg>
+                    <span>Plan</span>
                 </a>
                 <a href="#insights" class="nav-link" id="nav-insights">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
-                    <span>Smart Insights</span>
-                </a>
-                <a href="#simulator" class="nav-link" id="nav-simulator">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                    <span>Simulator</span>
-                    <span class="nav-badge">Afford?</span>
-                </a>
-                <a href="#reports" class="nav-link" id="nav-reports">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                    <span>Reports</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                    </svg>
+                    <span>Insights</span>
                 </a>
                 <a href="#settings" class="nav-link" id="nav-settings">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        </path>
+                    </svg>
                     <span>Settings</span>
                 </a>
             </nav>
@@ -94,61 +82,79 @@
             <!-- Header Topbar -->
             <header class="topbar">
                 <div class="topbar-left">
-                    <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation drawer">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation drawer"
+                        aria-expanded="false" aria-controls="sidebar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
                     </button>
-                    <div class="search-box">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" class="search-input" placeholder="Search transactions, budgets, goals..." onfocus="window.location.hash='#transactions'" />
+                    <div class="search-box" style="position:relative;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="global-search" class="search-input"
+                            placeholder="Search transactions, budgets, goals..." aria-label="Search transactions, budgets, and goals" autocomplete="off" />
+                        <div id="global-search-results" class="search-results-dropdown" role="listbox" aria-label="Search results" style="display:none;"></div>
                     </div>
                 </div>
 
                 <div class="topbar-right">
-                    <!-- User Mode Preset Dropdown -->
-                    <div class="mode-select-wrap">
-                        <label for="modeSelect">User Mode:</label>
-                        <select id="modeSelect" class="mode-select" aria-label="Select User Mode Preset">
-                            <option value="standard">Standard</option>
-                            <option value="accessible">Accessible</option>
-                            <option value="senior">Senior Mode</option>
-                            <option value="simplified">Simplified</option>
-                        </select>
-                    </div>
-
                     <!-- Notification Button -->
-                    <button class="btn-icon" id="notifBtn" aria-label="Notifications Drawer">
-                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                        <span class="badge-dot"></span>
+                    <button class="btn-icon" id="notifBtn" aria-label="Notifications Drawer" aria-expanded="false"
+                        aria-controls="notifDrawer">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="badge-dot" id="notifBadgeDot" style="display:none;"><span class="sr-only" id="notifBadgeText">0 unread notifications</span></span>
                     </button>
 
                     <!-- Accessibility Panel Toggle -->
-                    <button class="btn-icon" id="a11yBtn" aria-label="Accessibility Options Menu" aria-expanded="false">
-                        ♿
+                    <button class="btn-icon" id="a11yBtn" aria-label="Accessibility Options Menu" aria-expanded="false"
+                        aria-controls="a11yPanel">
+                        <span aria-hidden="true">♿</span>
                     </button>
 
                     <!-- User Profile Avatar Button -->
-                    <button class="user-avatar-btn" id="userProfileBtn" aria-label="User Profile Options">
-                        <span class="user-avatar-badge" id="userAvatarBadge">PP</span>
-                        <span id="userNameLabel" class="secondary-detail">Peter Parker</span>
+                    <button class="user-avatar-btn" id="userProfileBtn" aria-label="Profile menu, Peter Parker"
+                        aria-expanded="false" aria-controls="profilePanel">
+                        <span class="user-avatar-badge" id="userAvatarBadge">AM</span>
+                        <span id="userNameLabel" class="secondary-detail">Alex Morgan</span>
                     </button>
                 </div>
             </header>
 
             <!-- User Profile Dropdown Panel -->
-            <div class="a11y-panel" id="profilePanel" style="width:280px;">
-                <div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border); padding-bottom:12px;">
-                    <span class="user-avatar-badge" id="dropdownAvatarBadge" style="width:42px; height:42px; font-size:1.1rem;">PP</span>
+            <div class="a11y-panel" id="profilePanel" style="width:290px;">
+                <div
+                    style="display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border); padding-bottom:12px;">
+                    <span class="user-avatar-badge" id="dropdownAvatarBadge"
+                        style="width:44px; height:44px; font-size:1.1rem;">AM</span>
                     <div>
-                        <div style="font-weight:700;" id="dropdownUserName">Peter Parker</div>
-                        <div style="font-size:0.78rem; color:var(--text-muted);" id="dropdownUserRole">Student / Freelance Photographer</div>
+                        <div style="font-weight:700;" id="dropdownUserName">Alex Morgan</div>
+                        <div style="font-size:0.78rem; color:var(--text-muted);" id="dropdownUserRole">Student Profile</div>
                     </div>
                 </div>
-                <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
-                    <a href="#settings" class="btn btn-outline btn-sm" style="width:100%; text-align:left; justify-content:flex-start;" onclick="document.getElementById('profilePanel').classList.remove('open')">
-                        ⚙️ Account Settings
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+                    <button type="button" class="btn btn-secondary btn-sm" id="btnSwitchProfile"
+                        style="width:100%; text-align:left; justify-content:flex-start;"
+                        onclick="window.app.openProfileSwitcherModal(); document.getElementById('profilePanel').classList.remove('open');">
+                        <span aria-hidden="true">🔄</span> Switch User Profile
+                    </button>
+                    <a href="#settings" class="btn btn-outline btn-sm"
+                        style="width:100%; text-align:left; justify-content:flex-start;"
+                        onclick="document.getElementById('profilePanel').classList.remove('open')">
+                        <span aria-hidden="true">⚙️</span> Profile Settings
                     </a>
-                    <button class="btn btn-danger btn-sm" style="width:100%; text-align:left; justify-content:flex-start;" onclick="window.app.handleLogout()">
-                        🚪 Sign Out
+                    <button class="btn btn-danger btn-sm"
+                        style="width:100%; text-align:left; justify-content:flex-start;"
+                        onclick="window.app.handleLogout()">
+                        <span aria-hidden="true">🚪</span> Sign Out
                     </button>
                 </div>
             </div>
@@ -160,10 +166,24 @@
                 </div>
                 <div class="a11y-row">
                     <div>
+                        <div class="a11y-label">Dark Mode</div>
+                        <div class="a11y-subtext">Sleek dark theme</div>
+                    </div>
+                    <button class="btn btn-outline btn-sm" id="toggleDarkMode" aria-pressed="false">Toggle</button>
+                </div>
+                <div class="a11y-row">
+                    <div>
                         <div class="a11y-label">High Contrast</div>
                         <div class="a11y-subtext">Max visual contrast</div>
                     </div>
                     <button class="btn btn-outline btn-sm" id="toggleContrast" aria-pressed="false">Toggle</button>
+                </div>
+                <div class="a11y-row">
+                    <div>
+                        <div class="a11y-label">Dyslexia Font</div>
+                        <div class="a11y-subtext">OpenDyslexic typography</div>
+                    </div>
+                    <button class="btn btn-outline btn-sm" id="toggleDyslexicFont" aria-pressed="false">Toggle</button>
                 </div>
                 <div class="a11y-row">
                     <div>
@@ -179,7 +199,8 @@
                     </div>
                     <div style="display:flex; gap:6px;">
                         <button class="btn btn-outline btn-sm" id="fontDown" title="Decrease Font Size">A-</button>
-                        <button class="btn btn-outline btn-sm" id="fontReset" title="Reset Font Size to Default">Reset</button>
+                        <button class="btn btn-outline btn-sm" id="fontReset"
+                            title="Reset Font Size to Default">Reset</button>
                         <button class="btn btn-outline btn-sm" id="fontUp" title="Increase Font Size">A+</button>
                     </div>
                 </div>
@@ -187,40 +208,53 @@
 
             <!-- Notifications Drawer -->
             <div class="a11y-panel" id="notifDrawer" style="width:340px;">
-                <div class="a11y-header">
+                <div class="a11y-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h3>Notifications</h3>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Recent Alerts</span>
+                    <button type="button" class="btn btn-outline btn-sm" id="markAllNotifsReadBtn" style="font-size:0.75rem; padding:3px 8px;">Mark all read</button>
                 </div>
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    <div style="padding:10px; background:var(--bg); border-radius:8px; font-size:0.85rem;">
-                        <div style="font-weight:600;">🛒 Groceries Budget Notice</div>
-                        <div style="color:var(--text-muted); margin-top:2px;">You reached 39% of your monthly Groceries limit.</div>
-                    </div>
-                    <div style="padding:10px; background:var(--bg); border-radius:8px; font-size:0.85rem;">
-                        <div style="font-weight:600;">🏋️ Fitness First Gym Renewal</div>
-                        <div style="color:var(--text-muted); margin-top:2px;">₹2,500 recurring charge scheduled for Aug 15.</div>
-                    </div>
+                <div id="notifDrawerContent" style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+                    <!-- Dynamically populated by store.getNotifications() -->
                 </div>
             </div>
 
             <!-- Viewport Router Content -->
             <main class="content-area" id="app-content" tabindex="-1">
-                <!-- Dynamically rendered by JS router -->
+                <!-- If opened via file:// or before JS renders, helpful server guidance -->
+                <div id="local-server-warning" style="display:none; max-width:560px; margin:60px auto; padding:28px; background:var(--status-warning-bg); border:1px solid var(--status-warning-border); border-radius:12px; text-align:center;">
+                    <div style="font-size:2.5rem; margin-bottom:12px;" aria-hidden="true">💡</div>
+                    <h2 style="font-size:1.3rem; font-weight:700; color:var(--status-warning-text); margin-bottom:8px;">Local HTTP Server Required</h2>
+                    <p style="font-size:0.95rem; line-height:1.5; color:var(--text); margin-bottom:16px;">
+                        MindWallet is built with vanilla ES modules. Web browsers block local file imports when opened directly via <code>file:///</code>.
+                    </p>
+                    <p style="font-size:0.9rem; margin-bottom:10px; font-weight:600; color:var(--text);">Start a local server with Python:</p>
+                    <div style="background:#10233F; color:#FFFFFF; padding:12px; border-radius:8px; font-family:monospace; font-size:1rem; user-select:all; margin-bottom:16px;">
+                        python -m http.server 8000
+                    </div>
+                    <p style="font-size:0.88rem; color:var(--text-muted);">
+                        Then navigate to <a href="http://localhost:8000" style="color:var(--accent); font-weight:700; text-decoration:underline;">http://localhost:8000</a>
+                    </p>
+                </div>
             </main>
         </div>
     </div>
 
     <!-- Modal: Add Transaction -->
-    <div class="modal-overlay" id="modal-add-transaction">
+    <div class="modal-overlay" id="modal-add-transaction" role="dialog" aria-modal="true"
+        aria-labelledby="modal-add-tx-title">
         <div class="modal-card">
             <div class="modal-header">
-                <h2>Log New Transaction</h2>
-                <button class="close-btn" onclick="window.app.closeModal()">&times;</button>
+                <h2 id="modal-add-tx-title">Log New Transaction</h2>
+                <button type="button" class="close-btn" aria-label="Close dialog"
+                    onclick="window.app.closeModal()">&times;</button>
+            </div>
+            <div id="tx-error" role="alert"
+                style="display:none; color:var(--danger-text); background:var(--red-light); padding:8px 12px; border-radius:6px; margin-bottom:12px; font-size:0.875rem; border:1px solid var(--danger-text);">
             </div>
             <form onsubmit="window.app.handleAddTransaction(event)">
                 <div class="form-group">
                     <label for="tx-merchant">Merchant / Source Name</label>
-                    <input type="text" id="tx-merchant" class="form-control" placeholder="e.g. Swiggy, Apple Store, Salary" required />
+                    <input type="text" id="tx-merchant" class="form-control"
+                        placeholder="e.g. Swiggy, Apple Store, Salary" required />
                 </div>
                 <div class="form-grid" style="margin-top:12px;">
                     <div class="form-group">
@@ -240,6 +274,8 @@
                         <label for="tx-category">Category</label>
                         <select id="tx-category" class="form-control">
                             <option value="Groceries">Groceries</option>
+                            <option value="Dining out">Dining out</option>
+                            <option value="Shopping">Shopping</option>
                             <option value="Housing">Housing</option>
                             <option value="Utilities">Utilities</option>
                             <option value="Subscriptions">Subscriptions</option>
@@ -261,11 +297,16 @@
     </div>
 
     <!-- Modal: Set Budget -->
-    <div class="modal-overlay" id="modal-set-budget">
+    <div class="modal-overlay" id="modal-set-budget" role="dialog" aria-modal="true"
+        aria-labelledby="modal-set-budget-title">
         <div class="modal-card">
             <div class="modal-header">
-                <h2>Set Category Budget Limit</h2>
-                <button class="close-btn" onclick="window.app.closeModal()">&times;</button>
+                <h2 id="modal-set-budget-title">Set Category Budget Limit</h2>
+                <button type="button" class="close-btn" aria-label="Close dialog"
+                    onclick="window.app.closeModal()">&times;</button>
+            </div>
+            <div id="budget-error" role="alert"
+                style="display:none; color:var(--danger-text); background:var(--red-light); padding:8px 12px; border-radius:6px; margin-bottom:12px; font-size:0.875rem; border:1px solid var(--danger-text);">
             </div>
             <form onsubmit="window.app.handleSetBudget(event)">
                 <div class="form-group">
@@ -283,7 +324,8 @@
                 </div>
                 <div class="form-group" style="margin-top:12px;">
                     <label for="budget-limit">Monthly Limit (₹)</label>
-                    <input type="number" id="budget-limit" class="form-control" placeholder="10000" min="100" required />
+                    <input type="number" id="budget-limit" class="form-control" placeholder="10000" min="100"
+                        required />
                 </div>
                 <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px;">
                     Update Budget Threshold
@@ -293,25 +335,33 @@
     </div>
 
     <!-- Modal: Add Savings Goal -->
-    <div class="modal-overlay" id="modal-add-goal">
+    <div class="modal-overlay" id="modal-add-goal" role="dialog" aria-modal="true"
+        aria-labelledby="modal-add-goal-title">
         <div class="modal-card">
             <div class="modal-header">
-                <h2>Create Savings Goal</h2>
-                <button class="close-btn" onclick="window.app.closeModal()">&times;</button>
+                <h2 id="modal-add-goal-title">Create Savings Goal</h2>
+                <button type="button" class="close-btn" aria-label="Close dialog"
+                    onclick="window.app.closeModal()">&times;</button>
+            </div>
+            <div id="goal-error" role="alert"
+                style="display:none; color:var(--danger-text); background:var(--red-light); padding:8px 12px; border-radius:6px; margin-bottom:12px; font-size:0.875rem; border:1px solid var(--danger-text);">
             </div>
             <form onsubmit="window.app.handleAddGoal(event)">
                 <div class="form-group">
                     <label for="goal-name">Goal Name</label>
-                    <input type="text" id="goal-name" class="form-control" placeholder="e.g. Electric Scooter, Emergency Fund" required />
+                    <input type="text" id="goal-name" class="form-control"
+                        placeholder="e.g. Electric Scooter, Emergency Fund" required />
                 </div>
                 <div class="form-grid" style="margin-top:12px;">
                     <div class="form-group">
                         <label for="goal-target">Target Amount (₹)</label>
-                        <input type="number" id="goal-target" class="form-control" placeholder="80000" min="1000" required />
+                        <input type="number" id="goal-target" class="form-control" placeholder="80000" min="1000"
+                            required />
                     </div>
                     <div class="form-group">
                         <label for="goal-monthly">Monthly Deposit (₹)</label>
-                        <input type="number" id="goal-monthly" class="form-control" placeholder="5000" min="500" required />
+                        <input type="number" id="goal-monthly" class="form-control" placeholder="5000" min="500"
+                            required />
                     </div>
                 </div>
                 <div class="form-group" style="margin-top:12px;">
@@ -331,16 +381,22 @@
     </div>
 
     <!-- Modal: Add Subscription -->
-    <div class="modal-overlay" id="modal-add-subscription">
+    <div class="modal-overlay" id="modal-add-subscription" role="dialog" aria-modal="true"
+        aria-labelledby="modal-add-sub-title">
         <div class="modal-card">
             <div class="modal-header">
-                <h2>Track New Subscription</h2>
-                <button class="close-btn" onclick="window.app.closeModal()">&times;</button>
+                <h2 id="modal-add-sub-title">Track New Subscription</h2>
+                <button type="button" class="close-btn" aria-label="Close dialog"
+                    onclick="window.app.closeModal()">&times;</button>
+            </div>
+            <div id="sub-error" role="alert"
+                style="display:none; color:var(--danger-text); background:var(--red-light); padding:8px 12px; border-radius:6px; margin-bottom:12px; font-size:0.875rem; border:1px solid var(--danger-text);">
             </div>
             <form onsubmit="window.app.handleAddSubscription(event)">
                 <div class="form-group">
                     <label for="sub-name">Service Name</label>
-                    <input type="text" id="sub-name" class="form-control" placeholder="e.g. YouTube Premium, Adobe CC" required />
+                    <input type="text" id="sub-name" class="form-control" placeholder="e.g. YouTube Premium, Adobe CC"
+                        required />
                 </div>
                 <div class="form-grid" style="margin-top:12px;">
                     <div class="form-group">
@@ -378,11 +434,212 @@
         </div>
     </div>
 
-    <!-- Toast Notification Container -->
-    <div class="toast-container" id="toastContainer"></div>
+    <!-- Modal: Accessible Action Dialog (replaces window.confirm & window.prompt) -->
+    <div class="modal-overlay" id="modal-action-dialog" role="dialog" aria-modal="true"
+        aria-labelledby="action-dialog-title" aria-describedby="action-dialog-desc">
+        <div class="modal-card" style="max-width:440px;">
+            <div class="modal-header">
+                <h2 id="action-dialog-title">Confirm Action</h2>
+                <button type="button" class="close-btn" aria-label="Close dialog"
+                    onclick="window.app.closeActionDialog()">&times;</button>
+            </div>
+            <div id="action-dialog-error" role="alert"
+                style="display:none; color:var(--danger-text); background:var(--red-light); padding:8px 12px; border-radius:6px; margin-bottom:12px; font-size:0.875rem; border:1px solid var(--danger-text);">
+            </div>
+            <p id="action-dialog-desc"
+                style="color:var(--text); margin-bottom:16px; font-size:0.95rem; line-height:1.5;"></p>
+            <form id="action-dialog-form" onsubmit="window.app.handleActionDialogSubmit(event)">
+                <div class="form-group" id="action-dialog-input-group" style="display:none; margin-bottom:16px;">
+                    <label id="action-dialog-input-label" for="action-dialog-input">Input</label>
+                    <input type="text" id="action-dialog-input" class="form-control" />
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" class="btn btn-outline" id="action-dialog-cancel"
+                        onclick="window.app.closeActionDialog()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="action-dialog-confirm">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Screen Reader Live Announcements -->
+    <div id="a11y-live" aria-live="polite" class="sr-only"></div>
+
+    <!-- Reusable Floating Feedback Container (Contextual Suggestions & What Changed Popover) -->
+    <div id="floating-feedback-container" aria-live="polite"></div>
+
+    <!-- Modal: 3-Step Persona & Accessibility Onboarding Wizard -->
+    <div class="modal-overlay" id="modal-onboarding" role="dialog" aria-modal="true" aria-labelledby="onboarding-wizard-title">
+        <div class="modal-card onboarding-modal-card" id="onboarding-modal-card">
+            <!-- Dynamically populated by onboarding controller -->
+        </div>
+    </div>
+
+    <!-- Quick Add Floating Action Button (Log expense in under 5s) -->
+    <button class="fab-quick-add" id="fabQuickAdd" aria-label="Quick Add Transaction" title="Quick Add (+)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" width="24" height="24">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+    </button>
+
+    <!-- Modal/Sheet: Minimal Quick-Add (Sub-5s entry: amount, category, type, date defaults to today) -->
+    <div class="modal-overlay" id="sheet-quick-add" role="dialog" aria-modal="true" aria-labelledby="sheet-quick-add-title">
+        <div class="modal-card quick-add-card">
+            <div class="modal-header">
+                <div>
+                    <h2 id="sheet-quick-add-title" style="margin:0; font-size:1.15rem; font-weight:700;">⚡ Quick Add</h2>
+                    <p style="margin:2px 0 0 0; font-size:0.8rem; color:var(--text-muted);">Log an expense or income in 3 seconds</p>
+                </div>
+                <button type="button" class="close-btn" aria-label="Close Quick Add" onclick="window.app.closeModal()">&times;</button>
+            </div>
+            <div id="quick-add-error" role="alert" style="display:none; color:var(--danger-text); background:var(--red-light); padding:8px 12px; border-radius:6px; margin-bottom:12px; font-size:0.85rem; border:1px solid var(--danger-text);"></div>
+            <form id="form-quick-add" onsubmit="window.app.handleQuickAddTransaction(event)">
+                <div class="quick-add-type-toggle" role="group" aria-label="Transaction Type">
+                    <button type="button" class="quick-type-btn active" data-type="expense" id="quick-type-expense">Expense</button>
+                    <button type="button" class="quick-type-btn" data-type="income" id="quick-type-income">Income</button>
+                </div>
+                <input type="hidden" id="quick-add-type" value="expense" />
+
+                <div class="form-group" style="margin-top:14px;">
+                    <label for="quick-add-amount" style="font-size:0.85rem; font-weight:600;">Amount (₹) *</label>
+                    <div style="position:relative;">
+                        <span style="position:absolute; left:14px; top:50%; transform:translateY(-50%); font-weight:700; color:var(--text); font-size:1.3rem;">₹</span>
+                        <input type="number" id="quick-add-amount" class="form-control" placeholder="0" min="1" step="any" required autofocus style="padding-left:36px; font-size:1.35rem; font-weight:700; height:48px;" />
+                    </div>
+                </div>
+
+                <div class="form-grid" style="margin-top:12px; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                        <label for="quick-add-category" style="font-size:0.85rem; font-weight:600;">Category</label>
+                        <select id="quick-add-category" class="form-control" style="height:42px;">
+                            <option value="Dining out">Dining out</option>
+                            <option value="Groceries">Groceries</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Housing">Housing</option>
+                            <option value="Subscriptions">Subscriptions</option>
+                            <option value="Salary / Income">Salary / Income</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="quick-add-merchant" style="font-size:0.85rem; font-weight:600;">Merchant / Note</label>
+                        <input type="text" id="quick-add-merchant" class="form-control" placeholder="e.g. Swiggy, Coffee" style="height:42px;" />
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top:10px;">
+                    <label for="quick-add-date" style="font-size:0.8rem; color:var(--text-muted);">Date (defaults to today)</label>
+                    <input type="date" id="quick-add-date" class="form-control" style="height:38px; font-size:0.85rem;" />
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%; margin-top:16px; height:46px; font-weight:700; font-size:1rem; border-radius:10px;">
+                    Save Transaction
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Switch Profile Archetype Modal Dialog -->
+    <div class="modal-overlay" id="modal-profile-switcher" role="dialog" aria-modal="true" aria-labelledby="modal-profile-title">
+        <div class="modal-card" style="max-width:680px; width:92%;">
+            <div class="modal-header">
+                <div>
+                    <h2 id="modal-profile-title" style="margin:0; font-size:1.25rem; font-weight:700;">🔄 Switch Profile Archetype</h2>
+                    <p style="margin:4px 0 0 0; font-size:0.85rem; color:var(--text-muted);">Each profile archetype has its own isolated records, budgets, goals, and interface pacing.</p>
+                </div>
+                <button type="button" class="close-btn" aria-label="Close Profile Switcher" onclick="window.app.closeModal()">&times;</button>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; margin-top:16px;" id="profile-switcher-grid">
+                <!-- 1. Student -->
+                <div class="card profile-picker-card" style="padding:14px; border:2px solid var(--border); border-radius:12px; cursor:pointer;" onclick="window.app.switchProfile('student')">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:1.8rem;" aria-hidden="true">🎓</span>
+                            <div>
+                                <div style="font-weight:700; font-size:0.95rem;">Alex Morgan</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">Income: ₹18,000/mo</div>
+                            </div>
+                        </div>
+                        <span class="badge" style="font-size:0.7rem; background:var(--status-info-bg); color:var(--status-info-text);">Student</span>
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 10px 0; line-height:1.4;">Stipend budgeting, books & supplies, campus transit, and 24h cooling-off impulse check.</p>
+                    <button type="button" class="btn btn-outline btn-sm" style="width:100%; justify-content:center;">Switch to Student Profile →</button>
+                </div>
+
+                <!-- 2. Working Professional -->
+                <div class="card profile-picker-card" style="padding:14px; border:2px solid var(--border); border-radius:12px; cursor:pointer;" onclick="window.app.switchProfile('working_professional')">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:1.8rem;" aria-hidden="true">💼</span>
+                            <div>
+                                <div style="font-weight:700; font-size:0.95rem;">Priya Sharma</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">Income: ₹85,000/mo</div>
+                            </div>
+                        </div>
+                        <span class="badge" style="font-size:0.7rem; background:var(--emerald-light); color:var(--emerald);">Professional</span>
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 10px 0; line-height:1.4;">Corporate salary, apartment rent, SIP index investments & zero-based variance analysis.</p>
+                    <button type="button" class="btn btn-outline btn-sm" style="width:100%; justify-content:center;">Switch to Professional →</button>
+                </div>
+
+                <!-- 3. Senior Citizen / Retiree -->
+                <div class="card profile-picker-card" style="padding:14px; border:2px solid var(--border); border-radius:12px; cursor:pointer;" onclick="window.app.switchProfile('elderly_retiree')">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:1.8rem;" aria-hidden="true">👵</span>
+                            <div>
+                                <div style="font-weight:700; font-size:0.95rem;">Eleanor Vance</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">Pension: ₹36,000/mo</div>
+                            </div>
+                        </div>
+                        <span class="badge" style="font-size:0.7rem; background:var(--orange-light); color:var(--orange);">Senior Citizen</span>
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 10px 0; line-height:1.4;">Fixed pension, pharmacy & doctor funds, senior mode with ≥52px touch targets and large text.</p>
+                    <button type="button" class="btn btn-outline btn-sm" style="width:100%; justify-content:center;">Switch to Senior Profile →</button>
+                </div>
+
+                <!-- 4. Big-Goal Saver -->
+                <div class="card profile-picker-card" style="padding:14px; border:2px solid var(--border); border-radius:12px; cursor:pointer;" onclick="window.app.switchProfile('goal_saver')">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:1.8rem;" aria-hidden="true">🎯</span>
+                            <div>
+                                <div style="font-weight:700; font-size:0.95rem;">Rohan Mehta</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">Income: ₹110,000/mo</div>
+                            </div>
+                        </div>
+                        <span class="badge" style="font-size:0.7rem; background:#EAF1FC; color:var(--navy);">Big-Goal Saver</span>
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 10px 0; line-height:1.4;">Down payment & travel expeditions, milestone momentum, purchase delay simulator.</p>
+                    <button type="button" class="btn btn-outline btn-sm" style="width:100%; justify-content:center;">Switch to Goal Saver →</button>
+                </div>
+            </div>
+            <div style="margin-top:16px; display:flex; justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="window.app.closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container (Action Toasts with Undo) -->
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
     <!-- Application Script Module -->
     <script type="module" src="js/app.js"></script>
+    <script>
+        // Check if file:// protocol blocked ES module loading
+        if (window.location.protocol === 'file:') {
+            setTimeout(function() {
+                if (!window.app) {
+                    var warningEl = document.getElementById('local-server-warning');
+                    if (warningEl) warningEl.style.display = 'block';
+                }
+            }, 600);
+        }
+    </script>
 </body>
 
 </html>
