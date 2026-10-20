@@ -1,5 +1,25 @@
 /* MindWallet — Persona-Driven Profiles & Preset Configurations */
 
+export function getPersonaDate(dayNumber = 1) {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(Math.min(Math.max(1, dayNumber), 28)).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+export function getBillingDate(offsetDays = 7) {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    return d.toISOString().split('T')[0];
+}
+
+export function getFutureDate(monthsAhead = 6) {
+    const d = new Date();
+    d.setMonth(d.getMonth() + monthsAhead);
+    return d.toISOString().split('T')[0];
+}
+
 export const PERSONA_PRESETS = {
     student: {
         id: 'student',
@@ -31,21 +51,23 @@ export const PERSONA_PRESETS = {
                 { id: 'b_stu_6', category: 'Entertainment', limit: 1500, icon: '🎟️' }
             ],
             subscriptions: [
-                { id: 'sub_stu_1', name: 'Spotify Student', amount: 66, billingCycle: 'monthly', nextBilling: '2026-10-28', category: 'Entertainment' },
-                { id: 'sub_stu_2', name: 'Prime Student', amount: 749, billingCycle: 'annual', nextBilling: '2026-11-15', category: 'Shopping' },
-                { id: 'sub_stu_3', name: 'Notion AI Education', amount: 350, billingCycle: 'monthly', nextBilling: '2026-10-24', category: 'Utilities' }
+                { id: 'sub_stu_1', name: 'Spotify Student', amount: 66, billingCycle: 'monthly', nextBilling: getBillingDate(8), category: 'Entertainment' },
+                { id: 'sub_stu_2', name: 'Prime Student', amount: 749, billingCycle: 'annual', nextBilling: getBillingDate(25), category: 'Shopping' },
+                { id: 'sub_stu_3', name: 'Notion AI Education', amount: 350, billingCycle: 'monthly', nextBilling: getBillingDate(4), category: 'Utilities' }
             ],
             goals: [
-                { id: 'g_stu_1', name: 'Semester Laptop Upgrade', target: 45000, current: 24000, monthlyContribution: 3000, deadline: '2027-05-31', category: 'Tech' },
-                { id: 'g_stu_2', name: 'Summer Break Trek Fund', target: 15000, current: 8500, monthlyContribution: 1500, deadline: '2027-03-31', category: 'Travel' }
+                { id: 'g_stu_1', name: 'Semester Laptop Upgrade', target: 45000, current: 24000, monthlyContribution: 3000, deadline: getFutureDate(7), category: 'Tech' },
+                { id: 'g_stu_2', name: 'Summer Break Trek Fund', target: 15000, current: 8500, monthlyContribution: 1500, deadline: getFutureDate(5), category: 'Travel' }
             ],
             transactions: [
-                { id: 'tx_stu_1', merchant: 'University Stipend Deposit', category: 'Salary / Income', amount: 18000, type: 'income', date: '2026-10-01', icon: '💰', iconBg: '#EAF1FC', iconColor: 'var(--navy)' },
-                { id: 'tx_stu_2', merchant: 'Campus Book Depot (Textbooks)', category: 'Books & Supplies', amount: 1450, type: 'expense', date: '2026-10-18', icon: '📚', iconBg: '#F4F6F8', iconColor: 'var(--text)' },
-                { id: 'tx_stu_3', merchant: 'University Cafeteria Lunch', category: 'Dining out', amount: 280, type: 'expense', date: '2026-10-16', icon: '🍔', iconBg: '#F4F6F8', iconColor: 'var(--text)' },
-                { id: 'tx_stu_4', merchant: 'Metro Card Pass Recharge', category: 'Transport', amount: 500, type: 'expense', date: '2026-10-14', icon: '🚌', iconBg: '#F4F6F8', iconColor: 'var(--text)' },
-                { id: 'tx_stu_5', merchant: 'Campus Mart Groceries & Snacks', category: 'Groceries', amount: 1200, type: 'expense', date: '2026-10-11', icon: '🛒', iconBg: '#F4F6F8', iconColor: 'var(--text)' },
-                { id: 'tx_stu_6', merchant: 'Late Night Pizza Slice', category: 'Dining out', amount: 360, type: 'expense', date: '2026-10-08', icon: '🍔', iconBg: '#F4F6F8', iconColor: 'var(--text)' }
+                { id: 'tx_stu_1', merchant: 'University Stipend Deposit', category: 'Salary / Income', amount: 18000, type: 'income', date: getPersonaDate(1), icon: '💰', iconBg: '#EAF1FC', iconColor: 'var(--navy)', necessity: 'essential' },
+                { id: 'tx_stu_2', merchant: 'Campus Book Depot (Textbooks)', category: 'Books & Supplies', amount: 1450, type: 'expense', date: getPersonaDate(4), icon: '📚', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_stu_3', merchant: 'University Cafeteria Lunch', category: 'Dining out', amount: 280, type: 'expense', date: getPersonaDate(6), icon: '🍔', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'discretionary' },
+                { id: 'tx_stu_4', merchant: 'Metro Card Pass Recharge', category: 'Transport', amount: 500, type: 'expense', date: getPersonaDate(9), icon: '🚌', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_stu_5', merchant: 'Campus Mart Groceries & Snacks', category: 'Groceries', amount: 1200, type: 'expense', date: getPersonaDate(11), icon: '🛒', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_stu_6', merchant: 'Late Night Pizza Slice', category: 'Dining out', amount: 360, type: 'expense', date: getPersonaDate(14), icon: '🍔', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'discretionary' },
+                { id: 'tx_stu_7', merchant: 'Campus Stationery & Printouts', category: 'Books & Supplies', amount: 180, type: 'expense', date: getPersonaDate(16), icon: '📚', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_stu_8', merchant: 'Chai & Samosa Stall', category: 'Dining out', amount: 120, type: 'expense', date: getPersonaDate(18), icon: '🍔', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'discretionary' }
             ]
         }
     },
@@ -82,21 +104,23 @@ export const PERSONA_PRESETS = {
                 { category: 'Subscriptions', limit: 1500, icon: '🔁' }
             ],
             subscriptions: [
-                { id: 'sub_pro_1', name: 'Mint & Bloomberg Financial', amount: 899, billingCycle: 'monthly', nextBilling: '2026-10-31', category: 'Utilities' },
-                { id: 'sub_pro_2', name: 'Cult.fit Gym & Wellness', amount: 1499, billingCycle: 'monthly', nextBilling: '2026-11-05', category: 'Health' },
-                { id: 'sub_pro_3', name: 'Cloud Backup Storage', amount: 350, billingCycle: 'monthly', nextBilling: '2026-10-26', category: 'Utilities' }
+                { id: 'sub_pro_1', name: 'Mint & Bloomberg Financial', amount: 899, billingCycle: 'monthly', nextBilling: getBillingDate(11), category: 'Utilities' },
+                { id: 'sub_pro_2', name: 'Cult.fit Gym & Wellness', amount: 1499, billingCycle: 'monthly', nextBilling: getBillingDate(16), category: 'Health' },
+                { id: 'sub_pro_3', name: 'Cloud Backup Storage', amount: 350, billingCycle: 'monthly', nextBilling: getBillingDate(6), category: 'Utilities' }
             ],
             goals: [
-                { id: 'g_pro_1', name: 'Nifty 50 Index Wealth Corpus', target: 500000, current: 260000, monthlyContribution: 20000, deadline: '2027-04-30', category: 'Investment' },
-                { id: 'g_pro_2', name: 'Emergency 6-Month Runway', target: 200000, current: 160000, monthlyContribution: 8000, deadline: '2027-02-28', category: 'Emergency' }
+                { id: 'g_pro_1', name: 'Nifty 50 Index Wealth Corpus', target: 500000, current: 260000, monthlyContribution: 20000, deadline: getFutureDate(6), category: 'Investment' },
+                { id: 'g_pro_2', name: 'Emergency 6-Month Runway', target: 200000, current: 160000, monthlyContribution: 8000, deadline: getFutureDate(4), category: 'Emergency' }
             ],
             transactions: [
-                { id: 'tx_pro_1', merchant: 'Corporate Salary Credit', category: 'Salary / Income', amount: 85000, type: 'income', date: '2026-10-01', icon: '💰', iconBg: '#EAF1FC', iconColor: 'var(--navy)' },
-                { id: 'tx_pro_2', merchant: 'Apartment Rental Payment', category: 'Housing', amount: 25000, type: 'expense', date: '2026-10-02', icon: '🏠', iconBg: '#F4F6F8', iconColor: 'var(--text)' },
-                { id: 'tx_pro_3', merchant: 'Nifty 50 Index Mutual Fund SIP', category: 'Investments', amount: 20000, type: 'expense', date: '2026-10-05', icon: '📈', iconBg: '#F4F6F8', iconColor: 'var(--text)' },
-                { id: 'tx_pro_4', merchant: 'Organic Harvest Groceries', category: 'Groceries', amount: 6200, type: 'expense', date: '2026-10-11', icon: '🛒', iconBg: '#F4F6F8', iconColor: 'var(--text)' },
-                { id: 'tx_pro_5', merchant: 'Bistro Team Dinner', category: 'Dining out', amount: 1850, type: 'expense', date: '2026-10-15', icon: '🍽️', iconBg: '#F4F6F8', iconColor: 'var(--text)' },
-                { id: 'tx_pro_6', merchant: 'Broadband Fiber & Electric', category: 'Utilities', amount: 3100, type: 'expense', date: '2026-10-17', icon: '⚡', iconBg: '#F4F6F8', iconColor: 'var(--text)' }
+                { id: 'tx_pro_1', merchant: 'Corporate Salary Credit', category: 'Salary / Income', amount: 85000, type: 'income', date: getPersonaDate(1), icon: '💰', iconBg: '#EAF1FC', iconColor: 'var(--navy)', necessity: 'essential' },
+                { id: 'tx_pro_2', merchant: 'Apartment Rental Payment', category: 'Housing', amount: 25000, type: 'expense', date: getPersonaDate(2), icon: '🏠', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_pro_3', merchant: 'Nifty 50 Index Mutual Fund SIP', category: 'Investments', amount: 20000, type: 'expense', date: getPersonaDate(5), icon: '📈', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_pro_4', merchant: 'Organic Harvest Groceries', category: 'Groceries', amount: 6200, type: 'expense', date: getPersonaDate(8), icon: '🛒', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_pro_5', merchant: 'Broadband Fiber & Electric', category: 'Utilities', amount: 3100, type: 'expense', date: getPersonaDate(11), icon: '⚡', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_pro_6', merchant: 'Bistro Team Dinner', category: 'Dining out', amount: 1850, type: 'expense', date: getPersonaDate(14), icon: '🍽️', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'discretionary' },
+                { id: 'tx_pro_7', merchant: 'Uber Work Commute Pass', category: 'Transport', amount: 1450, type: 'expense', date: getPersonaDate(16), icon: '🚗', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_pro_8', merchant: 'Dental & Health Clinic Consultation', category: 'Healthcare', amount: 1200, type: 'expense', date: getPersonaDate(18), icon: '🏥', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' }
             ]
         }
     },
@@ -128,23 +152,26 @@ export const PERSONA_PRESETS = {
                 { category: 'Groceries', limit: 8000, icon: '🛒' },
                 { category: 'Utilities', limit: 5000, icon: '⚡' },
                 { category: 'Gifts & Family', limit: 4000, icon: '🎁' },
-                { category: 'Home & Gardening', limit: 3000, icon: '🌸' }
+                { category: 'Home & Gardening', limit: 3000, icon: '🌸' },
+                { category: 'Transport', limit: 2000, icon: '🛺' }
             ],
             subscriptions: [
-                { id: 'sub_sen_1', name: 'Morning Newspaper & Digest', amount: 450, billingCycle: 'monthly', nextBilling: '2026-10-25', category: 'Utilities' },
-                { id: 'sub_sen_2', name: 'Senior Health TeleCare Club', amount: 799, billingCycle: 'monthly', nextBilling: '2026-11-01', category: 'Healthcare' }
+                { id: 'sub_sen_1', name: 'Morning Newspaper & Digest', amount: 450, billingCycle: 'monthly', nextBilling: getBillingDate(5), category: 'Utilities' },
+                { id: 'sub_sen_2', name: 'Senior Health TeleCare Club', amount: 799, billingCycle: 'monthly', nextBilling: getBillingDate(12), category: 'Healthcare' }
             ],
             goals: [
-                { id: 'g_sen_1', name: 'Annual Health Insurance Sinking Fund', target: 50000, current: 38000, monthlyContribution: 3000, deadline: '2027-03-31', category: 'Health' },
-                { id: 'g_sen_2', name: 'Family Pilgrimage & Gathering', target: 60000, current: 45000, monthlyContribution: 2500, deadline: '2027-06-30', category: 'Travel' }
+                { id: 'g_sen_1', name: 'Annual Health Insurance Sinking Fund', target: 50000, current: 38000, monthlyContribution: 3000, deadline: getFutureDate(5), category: 'Health' },
+                { id: 'g_sen_2', name: 'Family Pilgrimage & Gathering', target: 60000, current: 45000, monthlyContribution: 2500, deadline: getFutureDate(8), category: 'Travel' }
             ],
             transactions: [
-                { id: 'tx_sen_1', merchant: 'Government Pension Monthly Credit', category: 'Salary / Income', amount: 36000, type: 'income', date: '2026-10-01', icon: '💰', iconBg: '#EAF1FC', iconColor: 'var(--navy)' },
-                { id: 'tx_sen_2', merchant: 'Apollo Pharmacy (Monthly Prescriptions)', category: 'Healthcare', amount: 2450, type: 'expense', date: '2026-10-04', icon: '💊', iconBg: '#F4F6F8', iconColor: 'var(--text)' },
-                { id: 'tx_sen_3', merchant: 'Fresh Produce & Dairy Farm Market', category: 'Groceries', amount: 1650, type: 'expense', date: '2026-10-08', icon: '🛒', iconBg: '#F4F6F8', iconColor: 'var(--text)' },
-                { id: 'tx_sen_4', merchant: 'Electricity & Piped Gas Utility', category: 'Utilities', amount: 1850, type: 'expense', date: '2026-10-12', icon: '⚡', iconBg: '#F4F6F8', iconColor: 'var(--text)' },
-                { id: 'tx_sen_5', merchant: 'Birthday Gift for Granddaughter', category: 'Gifts & Family', amount: 2000, type: 'expense', date: '2026-10-14', icon: '🎁', iconBg: '#F4F6F8', iconColor: 'var(--text)' },
-                { id: 'tx_sen_6', merchant: 'Cardiologist Follow-up Consultation', category: 'Healthcare', amount: 1200, type: 'expense', date: '2026-10-17', icon: '🏥', iconBg: '#F4F6F8', iconColor: 'var(--text)' }
+                { id: 'tx_sen_1', merchant: 'Government Pension Monthly Credit', category: 'Salary / Income', amount: 36000, type: 'income', date: getPersonaDate(1), icon: '💰', iconBg: '#EAF1FC', iconColor: 'var(--navy)', necessity: 'essential' },
+                { id: 'tx_sen_2', merchant: 'Apollo Pharmacy (Monthly Prescriptions)', category: 'Healthcare', amount: 2450, type: 'expense', date: getPersonaDate(3), icon: '💊', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_sen_3', merchant: 'Fresh Produce & Dairy Farm Market', category: 'Groceries', amount: 1650, type: 'expense', date: getPersonaDate(6), icon: '🛒', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_sen_4', merchant: 'Electricity & Piped Gas Utility', category: 'Utilities', amount: 1850, type: 'expense', date: getPersonaDate(10), icon: '⚡', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_sen_5', merchant: 'Birthday Gift for Granddaughter', category: 'Gifts & Family', amount: 2000, type: 'expense', date: getPersonaDate(13), icon: '🎁', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'discretionary' },
+                { id: 'tx_sen_6', merchant: 'Cardiologist Follow-up Consultation', category: 'Healthcare', amount: 1200, type: 'expense', date: getPersonaDate(15), icon: '🏥', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_sen_7', merchant: 'Organic Garden Seeds & Soil Mix', category: 'Home & Gardening', amount: 680, type: 'expense', date: getPersonaDate(17), icon: '🌸', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'discretionary' },
+                { id: 'tx_sen_8', merchant: 'Senior Auto-Rickshaw Commute', category: 'Transport', amount: 350, type: 'expense', date: getPersonaDate(18), icon: '🛺', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' }
             ]
         }
     },
@@ -172,6 +199,7 @@ export const PERSONA_PRESETS = {
         starterData: {
             budgets: [
                 { category: 'Housing', limit: 28000, icon: '🏠' },
+                { category: 'Savings Transfer', limit: 45000, icon: '🎯' },
                 { category: 'Groceries', limit: 12000, icon: '🛒' },
                 { category: 'Transport', limit: 5000, icon: '🚗' },
                 { category: 'Utilities', limit: 6000, icon: '⚡' },
@@ -180,21 +208,23 @@ export const PERSONA_PRESETS = {
                 { category: 'Subscriptions', limit: 1200, icon: '🔁' }
             ],
             subscriptions: [
-                { id: 'sub_rohan_1', name: 'GitHub Copilot Enterprise', amount: 850, billingCycle: 'monthly', nextBilling: '2026-10-25', category: 'Utilities' },
-                { id: 'sub_rohan_2', name: 'Spotify Music', amount: 119, billingCycle: 'monthly', nextBilling: '2026-11-01', category: 'Entertainment' }
+                { id: 'sub_rohan_1', name: 'GitHub Copilot Enterprise', amount: 850, billingCycle: 'monthly', nextBilling: getBillingDate(5), category: 'Utilities' },
+                { id: 'sub_rohan_2', name: 'Spotify Music', amount: 119, billingCycle: 'monthly', nextBilling: getBillingDate(12), category: 'Entertainment' }
             ],
             goals: [
-                { id: 'g_rohan_1', name: 'Dream Home Down Payment', target: 800000, current: 490000, monthlyContribution: 35000, deadline: '2027-08-31', category: 'Real Estate' },
-                { id: 'g_rohan_2', name: 'Japan Solo Travel Expedition', target: 180000, current: 125000, monthlyContribution: 10000, deadline: '2027-04-15', category: 'Travel' },
-                { id: 'g_rohan_3', name: 'EV Two-Wheeler Fund', target: 120000, current: 85000, monthlyContribution: 7500, deadline: '2027-01-31', category: 'Vehicle' }
+                { id: 'g_rohan_1', name: 'Dream Home Down Payment', target: 800000, current: 490000, monthlyContribution: 35000, deadline: getFutureDate(10), category: 'Real Estate' },
+                { id: 'g_rohan_2', name: 'Japan Solo Travel Expedition', target: 180000, current: 125000, monthlyContribution: 10000, deadline: getFutureDate(6), category: 'Travel' },
+                { id: 'g_rohan_3', name: 'EV Two-Wheeler Fund', target: 120000, current: 85000, monthlyContribution: 7500, deadline: getFutureDate(3), category: 'Vehicle' }
             ],
             transactions: [
-                { id: 'tx_rohan_1', merchant: 'Tech Corp Monthly Salary', category: 'Salary / Income', amount: 110000, type: 'income', date: '2026-10-01', icon: '💰', iconBg: '#EAF1FC', iconColor: 'var(--navy)' },
-                { id: 'tx_rohan_2', merchant: 'Auto-Transfer to Down Payment Goal', category: 'Savings Transfer', amount: 35000, type: 'expense', date: '2026-10-02', icon: '🎯', iconBg: '#E4F5EE', iconColor: 'var(--emerald)' },
-                { id: 'tx_rohan_3', merchant: 'Auto-Transfer to Japan Fund', category: 'Savings Transfer', amount: 10000, type: 'expense', date: '2026-10-02', icon: '🎯', iconBg: '#E4F5EE', iconColor: 'var(--emerald)' },
-                { id: 'tx_rohan_4', merchant: 'Apartment Rent', category: 'Housing', amount: 28000, type: 'expense', date: '2026-10-03', icon: '🏠', iconBg: '#F4F6F8', iconColor: 'var(--text)' },
-                { id: 'tx_rohan_5', merchant: 'Weekly Groceries & Essentials', category: 'Groceries', amount: 4800, type: 'expense', date: '2026-10-08', icon: '🛒', iconBg: '#F4F6F8', iconColor: 'var(--text)' },
-                { id: 'tx_rohan_6', merchant: 'Weekend Coffee & Brunch', category: 'Dining out', amount: 1200, type: 'expense', date: '2026-10-14', icon: '🍔', iconBg: '#F4F6F8', iconColor: 'var(--text)' }
+                { id: 'tx_rohan_1', merchant: 'Tech Corp Monthly Salary', category: 'Salary / Income', amount: 110000, type: 'income', date: getPersonaDate(1), icon: '💰', iconBg: '#EAF1FC', iconColor: 'var(--navy)', necessity: 'essential' },
+                { id: 'tx_rohan_2', merchant: 'Auto-Transfer to Down Payment Goal', category: 'Savings Transfer', amount: 35000, type: 'expense', date: getPersonaDate(2), icon: '🎯', iconBg: '#E4F5EE', iconColor: 'var(--emerald)', necessity: 'essential' },
+                { id: 'tx_rohan_3', merchant: 'Auto-Transfer to Japan Fund', category: 'Savings Transfer', amount: 10000, type: 'expense', date: getPersonaDate(2), icon: '🎯', iconBg: '#E4F5EE', iconColor: 'var(--emerald)', necessity: 'essential' },
+                { id: 'tx_rohan_4', merchant: 'Apartment Rent', category: 'Housing', amount: 28000, type: 'expense', date: getPersonaDate(3), icon: '🏠', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_rohan_5', merchant: 'Weekly Groceries & Essentials', category: 'Groceries', amount: 4800, type: 'expense', date: getPersonaDate(7), icon: '🛒', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_rohan_6', merchant: 'Metro & Fuel Expenses', category: 'Transport', amount: 1800, type: 'expense', date: getPersonaDate(10), icon: '🚗', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_rohan_7', merchant: 'Work Station Electric & Wifi', category: 'Utilities', amount: 2200, type: 'expense', date: getPersonaDate(12), icon: '⚡', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'essential' },
+                { id: 'tx_rohan_8', merchant: 'Weekend Coffee & Brunch', category: 'Dining out', amount: 1200, type: 'expense', date: getPersonaDate(15), icon: '🍔', iconBg: '#F4F6F8', iconColor: 'var(--text)', necessity: 'discretionary' }
             ]
         }
     },

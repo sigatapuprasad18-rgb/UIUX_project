@@ -6,17 +6,40 @@ class FeedbackUI {
         this.undoTimeout = null;
         this.activeDialogTrigger = null;
         this.dialogCallback = null;
+        this.toastQueue = [];
+        this.activeToasts = new Set();
+        this.MAX_ACTIVE_TOASTS = 2;
     }
 
     /**
-     * Action Toast with Real 8-Second Undo
+     * Action Toast with Real 8-Second Undo and FIFO Queue (Max 2 active, Top-Right)
      * @param {string} message - User-facing description
      * @param {'info'|'success'|'warning'|'danger'} type - Status theme
      * @param {Object} [undoAction] - Optional custom undo action override { label, onUndo }
      */
     showToast(message, type = 'info', undoAction = null) {
+        this.toastQueue.push({
+            id: 'toast-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+            message,
+            type,
+            undoAction
+        });
+        this.processToastQueue();
+    }
+
+    processToastQueue() {
         const container = document.getElementById('toastContainer');
         if (!container) return;
+
+        while (this.activeToasts.size < this.MAX_ACTIVE_TOASTS && this.toastQueue.length > 0) {
+            const item = this.toastQueue.shift();
+            this.renderToast(item, container);
+        }
+    }
+
+    renderToast(item, container) {
+        const { id, message, type, undoAction } = item;
+        this.activeToasts.add(id);
 
         // Announce to screen reader polite live region
         const liveRegion = document.getElementById('a11y-live');
@@ -25,6 +48,7 @@ class FeedbackUI {
         }
 
         const toast = document.createElement('div');
+        toast.id = id;
         toast.className = `toast ${type}`;
         toast.setAttribute('role', 'status');
         toast.setAttribute('tabindex', '0');
@@ -59,13 +83,23 @@ class FeedbackUI {
         let remainingTime = hasUndo ? 8000 : 5000;
         let startTime = Date.now();
         let timer = null;
+        let isRemoving = false;
+
+        const removeToast = () => {
+            if (isRemoving) return;
+            isRemoving = true;
+            if (timer) clearTimeout(timer);
+            toast.classList.add('fade-out');
+            setTimeout(() => {
+                toast.remove();
+                this.activeToasts.delete(id);
+                this.processToastQueue();
+            }, 250);
+        };
 
         const startTimer = () => {
             startTime = Date.now();
-            timer = setTimeout(() => {
-                toast.classList.add('fade-out');
-                setTimeout(() => toast.remove(), 250);
-            }, remainingTime);
+            timer = setTimeout(removeToast, remainingTime);
         };
 
         const pauseTimer = () => {
@@ -81,22 +115,32 @@ class FeedbackUI {
         toast.addEventListener('focusin', pauseTimer);
         toast.addEventListener('focusout', startTimer);
 
-        toast.querySelector('.toast-dismiss-btn')?.addEventListener('click', () => {
-            if (timer) clearTimeout(timer);
-            toast.remove();
-        });
+        toast.querySelector('.toast-dismiss-btn')?.addEventListener('click', removeToast);
 
         if (hasUndo) {
             toast.querySelector('.toast-action-btn')?.addEventListener('click', () => {
-                if (timer) clearTimeout(timer);
-                toast.remove();
+                removeToast();
 
                 if (undoAction?.onUndo) {
                     undoAction.onUndo();
                 } else {
                     const restoredDesc = store.undoLastAction();
-                    if (window.app && typeof window.app.renderCurrentView === 'function') {
-                        window.app.renderCurrentView();
+                    if (window.app) {
+                        if (typeof window.app.applySettings === 'function') {
+                            window.app.applySettings(store.getSettings());
+                        }
+                        if (typeof window.app.renderCurrentView === 'function') {
+                            window.app.renderCurrentView();
+                        }
+                        if (typeof window.app.updateUserProfileUI === 'function') {
+                            window.app.updateUserProfileUI();
+                        }
+                        if (typeof window.app.updateTopbarPersonaSelect === 'function') {
+                            window.app.updateTopbarPersonaSelect();
+                        }
+                        if (typeof window.app.updateNotificationsUI === 'function') {
+                            window.app.updateNotificationsUI();
+                        }
                     }
                     this.showToast(`Undone: ${restoredDesc}`, 'success');
                 }
@@ -107,14 +151,31 @@ class FeedbackUI {
     }
 
     /**
+     * Clear all active floating feedback cards (suggestions, popovers)
+     */
+    clearFloatingFeedback() {
+        const container = document.getElementById('floating-feedback-container');
+        if (container) {
+            container.querySelectorAll('.floating-feedback-card, .what-changed-popover').forEach(el => el.remove());
+        }
+    }
+
+    /**
      * Contextual Suggestion Card (Bottom-Right, Dismissible, Rule-Based)
      */
     checkAndShowContextualSuggestion() {
+        // Strictly suppress suggestions on login page or when unauthenticated
+        if (!store.getCurrentUser() || (window.app && window.app.currentView === 'login')) {
+            return;
+        }
+
         const container = document.getElementById('floating-feedback-container');
         if (!container) return;
 
-        // If a suggestion card or popover is already showing, do not stack
-        if (container.querySelector('.floating-feedback-card') || container.querySelector('.what-changed-popover')) {
+        // If a suggestion card, coach card, or popover is already showing, do not stack
+        if (container.querySelector('.floating-feedback-card') || 
+            container.querySelector('.coach-card') || 
+            container.querySelector('.what-changed-popover')) {
             return;
         }
 
@@ -181,11 +242,16 @@ class FeedbackUI {
      * @param {Function} onRevert - Callback to revert change
      */
     showWhatChangedPopover(previousPersona, newPersona, changesList, onRevert) {
+        // Strictly suppress on login page or when unauthenticated
+        if (!store.getCurrentUser() || (window.app && window.app.currentView === 'login')) {
+            return;
+        }
+
         const container = document.getElementById('floating-feedback-container');
         if (!container) return;
 
-        // Clean up previous
-        container.querySelectorAll('.what-changed-popover').forEach(el => el.remove());
+        // Clean up previous cards in container to prevent stacking collisions
+        container.querySelectorAll('.what-changed-popover, .floating-feedback-card').forEach(el => el.remove());
 
         const popover = document.createElement('div');
         popover.className = 'what-changed-popover';

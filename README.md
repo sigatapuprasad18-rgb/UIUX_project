@@ -14,34 +14,43 @@
 
 1. **Profile Archetype Isolation Architecture (`js/personas.js` & `js/store.js`)**:
    - **4 Distinct User Profiles**: Replaced topbar toggle buttons with full, isolated user profiles that users select during login or switch from the profile avatar menu:
-     - 🎓 **Student Profile (Alex Morgan)**: Stipend (₹18,000/mo), textbook & campus transit budgets, 24-hour cooling-off deliberation buffer on impulse purchases.
-     - 💼 **Working Professional Profile (Priya Sharma)**: Corporate salary (₹85,000/mo), apartment rent, SIP index mutual funds, subscription audits, and zero-based variance analysis.
-     - 👵 **Senior Citizen / Retiree Profile (Eleanor Vance)**: Fixed pension (₹36,000/mo), pharmacy prescriptions, doctor consultations, and auto-enabled **Senior Mode** (≥52px touch targets and enlarged typography).
-     - 🎯 **Big-Goal Saver Profile (Rohan Mehta)**: High income (₹110,000/mo), home down-payment and travel expedition milestones, delayed gratification momentum, and purchase simulator ETA delay analysis.
-   - **Complete Data Isolation**: Each profile maintains its own snapshots under `mindwallet_profile_${profileId}_data`. Changes made in one profile never bleed into another.
-   - **Accessible Profile Switcher Modal (`#modal-profile-switcher`)**: Integrated into the user avatar menu for 1-click seamless profile switching.
-2. **Decluttered Overview Dashboard (3-Tier Hierarchy)**:
+     - 🎓 **Student Profile (Alex Morgan)**: Stipend (₹18,000/mo), textbook & campus transit budgets, cafeteria meals, student discounts (Spotify Student, Prime Student), and a 24-hour cooling-off deliberation buffer on impulse purchases.
+     - 💼 **Working Professional Profile (Priya Sharma)**: Corporate salary (₹85,000/mo), apartment rent, SIP Nifty 50 index mutual funds, Cult.fit gym wellness, subscription audits, and zero-based variance analysis.
+     - 👵 **Senior Citizen / Retiree Profile (Eleanor Vance)**: Fixed pension (₹36,000/mo), pharmacy prescriptions, cardiologist consultations, fresh dairy & produce, grandchildren gifts, and auto-enabled **Senior Mode** (≥52px touch targets and enlarged typography).
+     - 🎯 **Big-Goal Saver Profile (Rohan Mehta)**: High tech income (₹110,000/mo), home down-payment and travel expedition milestone funds, automated savings transfers, delayed gratification momentum, and purchase simulator ETA delay analysis.
+   - **Complete Data Isolation**: Each profile maintains its own snapshots under `mindwallet_profile_${profileId}_data` across 6 distinct collections (`transactions`, `budgets`, `goals`, `subscriptions`, `deposits`, and `simulationLog`). Changes made in one profile never bleed into another.
+   - **Accessible Profile Switcher Modal (`#modal-profile-switcher`)**: Integrated into the user avatar menu for 1-click seamless profile switching with reversible undo.
+
+2. **Real-Time Plan Page & Reactive Transaction Updates (`js/views/plan.js` & `js/views/budget.js`)**:
+   - **Direct "+ Log Expense" on Budget Planner**: Users can log transactions directly on the budget page without navigating away, immediately seeing category spending bars and status thresholds update in real time.
+   - **Monthly Budget Overview Summary Card**: Live aggregate breakdown of total spending vs. budget threshold with dynamic warning/critical status alerts.
+   - **Dynamic Month & Resilient Date Engine**: Replaced static dates with dynamic month calculation (`getPersonaDate()`) ensuring starter and user-logged transactions always align with the active billing cycle.
+   - **Synchronized Savings Deposits**: Depositing funds into savings goals automatically records a matching "Savings Transfer" expense transaction, keeping cash flow, activity logs, and milestone budgets strictly in sync.
+
+3. **Session Route Gatekeeper (`js/app.js`)**:
+   - Application startup strictly enforces the **Sign In & Profile Setup (`#login`)** as the default opening gatekeeper.
+   - Dashboard, Plan, and Activity access is locked until explicit sign-in or guest profile archetype selection is completed.
+
+4. **Advanced Transaction Filters & Responsive Toolbar (`js/views/transactions.js`)**:
+   - **Side-by-Side Responsive Filter Grid**: 4 transaction dropdown filters (Category, Type, Date range, Necessity) aligned in an equal 25% responsive grid with 12px spacing.
+   - **Dual Sorting Engine**: Real-time sorting by Date, Amount, and Merchant with Ascending/Descending toggle button and `aria-sort` column headers.
+
+5. **Decluttered Overview Dashboard (3-Tier Hierarchy)**:
    - **Tier 1 (Hero)**: Prominent "Money left this month" hero card (monthly income minus monthly expenses, NOT all-time net), live 1-line Financial Health Score status with icon + text, and primary "+ Add Transaction" action.
    - **Tier 2 (Max 3 Compact Cards)**: Budgets in Warning/Critical state only (with calm all-healthy zero state), Top active savings goal, and Last 5 recorded transactions.
    - **Tier 3 (Progressive Disclosure)**: Direct deep-links ("See details →") to dedicated planner, goal, and tracker modules.
-3. **5-Group Semantic Navigation**: Regrouped sidebar into 5 intuitive functional clusters:
+
+6. **Semantic Navigation Clusters**:
    - **Home**: Dashboard (`#dashboard`)
-   - **Money In/Out**: Income & Expense Tracker (`#transactions`), Subscriptions (`#subscriptions`)
-   - **Plan**: Budget Planner (`#budget`), Savings Goals (`#savings`)
-   - **Decide**: Purchase Simulator (`#simulator`), Analytics & Reports (`#analytics`)
-   - **Settings**: Settings & Profile Archetypes (`#settings`)
-4. **Floating Feedback & Interaction System (`js/ui/feedback.js` & `js/ui/coach.js`)**:
-   - **Action Toasts with Real Undo**: Reversible 1-click restore for transaction deletions, subscription cancellations, and budget updates.
-   - **Contextual Suggestion Card**: Non-blocking floating bottom-right recommendation card with "Not now" and "Don't show again" local persistence.
-   - **"What Changed" Popover & Financial Coach**: Explains interface and layout adaptations after switching profiles or accessibility modifiers with an instant "Revert" button.
-   - **Accessible Action Dialogs**: Replaces browser-native `confirm()` and `prompt()` with keyboard-trapped, screen-reader announced modal dialogs.
-5. **Interactive 3-Step Onboarding Wizard (`js/ui/onboarding.js`)**:
-   - Profile archetype selection with immediate preview of benchmarks and guidance tone.
-   - Stackable accessibility modifiers (Low Vision, Color-Blind Safe, Motor, Cognitive, Screen-Reader, Dyslexia).
-   - Realistic per-profile seed data and tailored budget thresholds.
-6. **Purchase Simulator ("Can I Afford This?")**: Multi-factor affordability diagnostic displaying Health Score **Before AND After**, specific category budget impact, and user-selected savings goal delay (+days).
-7. **Spending Analytics & Reports (Merged View)**: Data-driven Comparative Monthly Flow chart bars with screen-reader table alternative and printable official bank statement (`window.print()`).
-8. **Accessible Status System**: Status is always paired with **icon + text**, never color alone (WCAG 1.4.1 compliance).
+   - **Activity**: Income & Expense Tracker (`#transactions`), Monthly Financial Statement (`#reports`)
+   - **Plan**: Budget Planner (`#budget`), Savings Goals (`#savings`), Subscription Manager (`#subscriptions`)
+   - **Insights**: Financial Health Score (`#health`), Analytics & Trends (`#analytics`), Purchase Simulator (`#simulator`)
+   - **Settings**: Accessibility Modifiers & Profile Archetypes (`#settings`)
+
+7. **Floating Feedback & Interaction System (`js/ui/feedback.js` & `js/ui/coach.js`)**:
+   - **Action Toasts with Real Undo**: Reversible 1-click restore for transaction additions/deletions, profile switches, and budget threshold adjustments.
+   - **Accessible Action Dialogs**: Replaces disruptive browser-native `confirm()` and `prompt()` with keyboard-trapped, screen-reader announced modal dialogs.
+   - **Behavioral Financial Coach**: Contextual micro-guidance after logging expenses or crossing budget capacity.
 
 ---
 
@@ -92,36 +101,20 @@ All text elements maintain at least **4.5:1** contrast against their backgrounds
 - **Modal Dialogs**: Custom accessible dialogs (`role="dialog"`, `aria-modal="true"`, `aria-labelledby`, `aria-describedby`) with focus restoration, Tab and Shift+Tab cycling trap, and `Escape` key dismissal.
 - **Single Page App Routing**: Changing routes updates `document.title` and shifts programmatic focus to the view's primary `<h1 tabindex="-1">`.
 
-### 3. Screen Reader Semantics & ARIA (SC 1.1.1, 1.3.1, 4.1.2, 4.1.3)
-- **Landmarks & Navigation**: Multiple `<nav>` elements have distinct accessible labels (`"Core platform"`, `"Decision tools"`).
-- **Tables**: Financial data tables feature screen reader `<caption>` elements and properly scoped column headers (`<th scope="col">`).
-- **Dynamic Indicators**: Health Score and Budget meters use `role="progressbar"` and `role="meter"` with live `aria-valuenow`, `aria-valuemin`, and `aria-valuemax` attributes.
-- **Live Announcements**: An invisible `#a11y-live` polite live region announces toast alerts, page transitions, and status updates to screen readers.
-- **Non-Text Content**: Decorative emojis are wrapped in `<span aria-hidden="true">` with descriptive text alternatives.
-
-### 4. Error Prevention & Reversibility (SC 3.3.1, 3.3.3, 3.3.4)
-- **No Disruptive Popups**: Browser-native `confirm()` and `prompt()` have been replaced with accessible in-app modal action dialogs.
-- **Inline Validation**: Forms feature dedicated `<div role="alert">` feedback containers indicating missing or invalid fields and immediately focusing the error source.
-- **Reversible Deletion**: Deleting transactions or canceling subscriptions automatically triggers an **8-second undo toast** allowing instant one-click restoration.
-
-### 5. Responsive Reflow & Target Sizes (SC 1.4.4, 1.4.10, 2.5.8)
-- **Reflow**: Full responsive layout tested from $1920\text{px}$ down to $320\text{px}$ width with zero horizontal scrolling.
-- **Zoom**: Fully functional up to $400\%$ zoom with dynamic responsive stacking and flexible grid containers.
-- **Target Sizes**: All buttons, links, and icon triggers meet or exceed the minimum $44\times 44\text{px}$ touch target size.
-
 ---
 
 ## 📁 Project Structure
 
 ```text
 uiux_project/
-├── index.html            # Main Accessible HTML Shell & Modals
+├── index.html            # Main Accessible HTML Shell & Universal Modals
 ├── css/
 │   └── style.css         # Design System, High Contrast, Motion & Sizing CSS
 ├── js/
 │   ├── app.js            # Main Controller, Router, Modal & Profile Handlers
 │   ├── store.js          # Central Store, Per-Profile Data Isolation & Engines
-│   ├── personas.js       # Archetype Presets (Student, Professional, Senior, Saver)
+│   ├── personas.js       # Dynamic Dates & Archetype Presets (Student, Professional, Senior, Saver)
+│   ├── api.js            # MongoDB Atlas Cloud API Client
 │   ├── ui/
 │   │   ├── onboarding.js # 3-Step Wizard & Profile Customizer
 │   │   ├── feedback.js   # Action Toasts, Reversible Undo & Action Dialogs
@@ -129,54 +122,67 @@ uiux_project/
 │   └── views/
 │       ├── dashboard.js  # Overview Dashboard View
 │       ├── activity.js   # Activity Hub (Transactions & Statement Reports)
+│       ├── transactions.js# Transaction Table, Dynamic Filters & Sorting
 │       ├── plan.js       # Financial Plan Hub (Budgets, Goals, Subscriptions)
+│       ├── budget.js     # Real-Time Budget Planner View & Allocation Meter
+│       ├── savings.js    # Savings Goals & Piggy-Bank Deposit View
+│       ├── subscriptions.js # Subscription Auditor View
 │       ├── insights.js   # Insights Hub (Health Gauge, Analytics, Simulator)
 │       ├── settings.js   # Settings & Profile Archetypes View
 │       └── login.js      # Profile Archetype Login & Registration View
-├── documentation/        # Presentation Deck & Cognitive Design Report
-├── scripts/
-│   └── verify-contrast.js# WCAG Contrast Calculation Verification Script
+├── models/               # Mongoose Schemas (User, Transaction, Budget, Goal, Subscription)
+├── routes/               # Express API Endpoints (Auth, Sync, Health, Analytics)
+├── seed.js               # MongoDB Atlas Seeder Script for All 4 Archetypes
+├── server.js             # Express Backend Server
 └── README.md             # Documentation & Conformance Report
 ```
 
 ---
 
-## 🚀 How to Run Locally
+## 🍃 MongoDB Atlas Cloud Integration
 
-Because MindWallet is built entirely with vanilla web standards (no bundlers, frameworks, or build steps required), you can run it instantly using any static web server:
-
-### Option 1: Live Server (VS Code Extension)
-1. Open the project folder in **VS Code**.
-2. Right-click `index.html` and click **"Open with Live Server"**.
-
-### Option 2: Python HTTP Server
-```bash
-python -m http.server 8000
-```
-Open your browser at `http://localhost:8000/index.html`.
-
-### Option 3: Node / npx
-```bash
-npx serve .
-```
+MindWallet features full cloud persistence powered by **MongoDB Atlas** with a resilient **Hybrid Sync Architecture**:
+- **MongoDB Atlas Cluster**: `cluster0.khyrrx8.mongodb.net` (Database: `mindwallet`).
+- **Real-Time Cloud Persistence**: User profiles, transactions, category budgets, savings goals, subscriptions, notifications, and accessibility settings persist across devices.
+- **Persona Data Segregation**: Records are strictly partitioned by `{ userId, persona }`, guaranteeing true isolation across personas.
+- **Deleted Item Pruning**: Prunes removed records in MongoDB Atlas during sync, preventing resurrecting deleted transactions.
+- **Hybrid Offline Fallback**: If the server or cluster is unreachable, MindWallet automatically falls back to local storage without interruption or UI failure.
+- **TopBar Status Indicator**: Visual pill displays live connection status (🟢 Connected vs 🟠 Offline Mode) with latency diagnostics and manual sync triggers.
 
 ---
 
-## 🎨 Design System & Color Palette
+## 🚀 How to Run & Push to GitHub
 
-- **Primary Navy**: `#10233F` (Background contrast: 12.87:1 on white)
-- **Accessible Emerald**: `#0F7A5A` (Contrast: 5.37:1 on white)
-- **Warning Text**: `#8A5300` (Contrast: 5.86:1 on `#FEF3E2`)
-- **Danger Text**: `#B02A37` (Contrast: 5.48:1 on `#FCE8E8`)
-- **Strong Borders**: `#64748B` (Contrast: 4.79:1 on white)
-- **High Contrast Background**: `#0B0F17`
-- **High Contrast Surface**: `#131B2E`
-- **Typography**: `Poppins` (display headings) & `Inter` (body & tabular numbers)
+### Running the Application
 
----
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+2. **Seed MongoDB Atlas** *(Optional / First Run)*:
+   ```bash
+   node seed.js
+   ```
+3. **Start the Express Server**:
+   ```bash
+   npm start
+   ```
+   *(Or for live-reload dev mode: `npm run dev`)*
+4. **Open in Browser**:
+   ```
+   http://localhost:3000
+   ```
 
-## 🗺️ Roadmap & Planned Features
+### Pushing Changes to GitHub
 
-- **Automated OpenBanking Sync** *(Planned)*: Automated server-side synchronization with checking and credit accounts.
-- **Direct PDF Export Pipeline** *(Planned)*: Native PDF blob generation without relying on browser print dialogs.
-- **Custom Budget Periods** *(Planned)*: Bi-weekly and custom pay-period budget schedules.
+To push your latest changes to your GitHub repository:
+```bash
+# 1. Stage all changes
+git add .
+
+# 2. Commit with descriptive message
+git commit -m "Fix transaction updates in plan page, isolate persona data, and enhance category filters"
+
+# 3. Push to main branch
+git push origin main
+```

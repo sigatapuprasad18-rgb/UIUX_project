@@ -103,6 +103,12 @@
                 </div>
 
                 <div class="topbar-right">
+                    <!-- MongoDB Atlas Cloud Sync Status Pill -->
+                    <button class="db-sync-btn" id="dbSyncBtn" aria-label="MongoDB Atlas Cloud Sync Status" title="MongoDB Atlas: Connecting..." aria-expanded="false" aria-controls="modal-db-sync">
+                        <span class="db-sync-dot" id="dbSyncDot"></span>
+                        <span class="db-sync-label" id="dbSyncLabel">MongoDB</span>
+                    </button>
+
                     <!-- Notification Button -->
                     <button class="btn-icon" id="notifBtn" aria-label="Notifications Drawer" aria-expanded="false"
                         aria-controls="notifDrawer">
@@ -275,13 +281,20 @@
                         <select id="tx-category" class="form-control">
                             <option value="Groceries">Groceries</option>
                             <option value="Dining out">Dining out</option>
-                            <option value="Shopping">Shopping</option>
                             <option value="Housing">Housing</option>
                             <option value="Utilities">Utilities</option>
+                            <option value="Transport">Transport</option>
                             <option value="Subscriptions">Subscriptions</option>
                             <option value="Entertainment">Entertainment</option>
-                            <option value="Transport">Transport</option>
-                            <option value="Income">Income</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Books & Supplies">Books & Supplies</option>
+                            <option value="Investments">Investments</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Gifts & Family">Gifts & Family</option>
+                            <option value="Home & Gardening">Home & Gardening</option>
+                            <option value="Savings Transfer">Savings Transfer</option>
+                            <option value="Salary / Income">Salary / Income</option>
+                            <option value="Other">Other</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -313,13 +326,19 @@
                     <label for="budget-category">Category</label>
                     <select id="budget-category" class="form-control">
                         <option value="Groceries">Groceries</option>
+                        <option value="Dining out">Dining out</option>
                         <option value="Housing">Housing</option>
                         <option value="Utilities">Utilities</option>
-                        <option value="Dining out">Dining out</option>
+                        <option value="Transport">Transport</option>
                         <option value="Subscriptions">Subscriptions</option>
                         <option value="Entertainment">Entertainment</option>
-                        <option value="Transport">Transport</option>
                         <option value="Shopping">Shopping</option>
+                        <option value="Books & Supplies">Books & Supplies</option>
+                        <option value="Investments">Investments</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Gifts & Family">Gifts & Family</option>
+                        <option value="Home & Gardening">Home & Gardening</option>
+                        <option value="Savings Transfer">Savings Transfer</option>
                     </select>
                 </div>
                 <div class="form-group" style="margin-top:12px;">
@@ -515,12 +534,18 @@
                         <select id="quick-add-category" class="form-control" style="height:42px;">
                             <option value="Dining out">Dining out</option>
                             <option value="Groceries">Groceries</option>
-                            <option value="Shopping">Shopping</option>
-                            <option value="Transport">Transport</option>
-                            <option value="Entertainment">Entertainment</option>
-                            <option value="Utilities">Utilities</option>
                             <option value="Housing">Housing</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Transport">Transport</option>
                             <option value="Subscriptions">Subscriptions</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Books & Supplies">Books & Supplies</option>
+                            <option value="Investments">Investments</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Gifts & Family">Gifts & Family</option>
+                            <option value="Home & Gardening">Home & Gardening</option>
+                            <option value="Savings Transfer">Savings Transfer</option>
                             <option value="Salary / Income">Salary / Income</option>
                             <option value="Other">Other</option>
                         </select>
@@ -620,6 +645,64 @@
             </div>
             <div style="margin-top:16px; display:flex; justify-content:flex-end;">
                 <button type="button" class="btn btn-secondary" onclick="window.app.closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MongoDB Atlas Cloud Database Modal -->
+    <div class="modal-overlay" id="modal-db-sync" role="dialog" aria-modal="true" aria-labelledby="dbModalTitle">
+        <div class="modal-card" style="max-width: 520px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.4rem;" aria-hidden="true">🍃</span>
+                    <h3 id="dbModalTitle" style="margin: 0; font-size: 1.15rem;">MongoDB Atlas Cloud Database</h3>
+                </div>
+                <button type="button" class="close-btn" id="closeDbModal" aria-label="Close database dialog" onclick="window.app.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="db-status-banner" id="dbStatusBanner">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                        <span style="font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                            <span class="db-sync-dot" id="dbModalDot"></span>
+                            <span id="dbModalStatusText">Connecting to Cluster...</span>
+                        </span>
+                        <span class="badge" id="dbModalClusterName">Cluster0 / mindwallet</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 8px 0 0;" id="dbModalDesc">
+                        MindWallet is connected to your MongoDB Atlas cloud cluster. Changes sync automatically in real time with local offline fallback.
+                    </p>
+                </div>
+
+                <div class="db-stats-grid">
+                    <div class="db-stat-card">
+                        <span class="db-stat-num" id="dbStatUsers">4</span>
+                        <span class="db-stat-lbl">Profiles Synced</span>
+                    </div>
+                    <div class="db-stat-card">
+                        <span class="db-stat-num" id="dbStatTxs">-</span>
+                        <span class="db-stat-lbl">Transactions</span>
+                    </div>
+                    <div class="db-stat-card">
+                        <span class="db-stat-num" id="dbStatBudgets">-</span>
+                        <span class="db-stat-lbl">Budgets</span>
+                    </div>
+                    <div class="db-stat-card">
+                        <span class="db-stat-num" id="dbStatGoals">-</span>
+                        <span class="db-stat-lbl">Savings Goals</span>
+                    </div>
+                </div>
+
+                <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid var(--border);">
+                    <span>Last Synced: <strong id="dbLastSyncTime">Just now</strong></span>
+                    <span id="dbSyncLatency">Connected</span>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                <button type="button" class="btn btn-outline btn-sm" id="btnTestDbConnection" onclick="window.app.testDbConnection()">⚡ Test Connection</button>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.app.closeModal()">Close</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnTriggerCloudSync" onclick="window.app.triggerManualSync()">☁️ Sync Now</button>
+                </div>
             </div>
         </div>
     </div>

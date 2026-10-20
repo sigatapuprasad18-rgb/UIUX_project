@@ -1,5 +1,6 @@
 /* MindWallet — Main Application Controller & Router */
 import { store, escapeHtml, CATEGORY_ICONS } from './store.js';
+import { api } from './api.js';
 import { feedback } from './ui/feedback.js';
 import { onboarding } from './ui/onboarding.js';
 import { coach } from './ui/coach.js';
@@ -10,14 +11,25 @@ import { renderPlan } from './views/plan.js';
 import { renderInsights } from './views/insights.js';
 import { renderSettings } from './views/settings.js';
 import { renderLogin } from './views/login.js';
+import { renderTxRows, filterAndSortTransactions } from './views/transactions.js';
 
 class App {
     constructor() {
-        this.currentView = 'dashboard';
+        const isSessionActive = sessionStorage.getItem('mindwallet_session_active') === 'true';
+        this.currentView = (isSessionActive && store.getCurrentUser()) ? 'dashboard' : 'login';
         this.activeSubTab = {
             activity: 'transactions',
             plan: 'budget',
             insights: 'health'
+        };
+        this.txFilterState = {
+            search: '',
+            category: 'all',
+            type: 'all',
+            dateRange: 'all',
+            necessity: 'all',
+            sortBy: 'date',
+            sortOrder: 'desc'
         };
         this.selectedReportMonth = null;
         this.activeModal = null;
@@ -27,9 +39,20 @@ class App {
     }
 
     init() {
+        // Enforce default opening page: Must sign in & set up profile persona before accessing dashboard
+        const isSessionActive = sessionStorage.getItem('mindwallet_session_active') === 'true';
+        if (!isSessionActive || !store.getCurrentUser()) {
+            store.logout();
+            sessionStorage.removeItem('mindwallet_session_active');
+            if (window.location.hash !== '#login') {
+                window.location.hash = '#login';
+            }
+        }
+
         this.setupRouter();
         this.setupAccessibilityPanel();
         this.setupProfilePanel();
+        this.setupDbSyncUI();
         this.setupGlobalEvents();
         this.setupGlobalSearch();
         this.updateNotificationsUI();
@@ -39,16 +62,28 @@ class App {
         this.updateSidebarA11y();
         window.addEventListener('resize', () => this.updateSidebarA11y());
 
-        // First-visit interactive onboarding wizard
-        if (!store.hasCompletedOnboarding() && store.getCurrentUser()) {
+        // Perform initial cloud sync only if authenticated
+        if (store.getCurrentUser() && sessionStorage.getItem('mindwallet_session_active') === 'true') {
+            store.syncWithCloud().then(synced => {
+                if (synced) {
+                    this.renderCurrentView();
+                    this.updateNotificationsUI();
+                }
+            });
+        }
+
+        // First-visit interactive onboarding wizard (only if authenticated)
+        if (!store.hasCompletedOnboarding() && store.getCurrentUser() && sessionStorage.getItem('mindwallet_session_active') === 'true') {
             setTimeout(() => {
                 onboarding.open(1);
             }, 600);
         }
 
-        // Check contextual suggestions after load
+        // Check contextual suggestions after load (only if authenticated and not on login page)
         setTimeout(() => {
-            feedback.checkAndShowContextualSuggestion();
+            if (store.getCurrentUser() && this.currentView !== 'login' && sessionStorage.getItem('mindwallet_session_active') === 'true') {
+                feedback.checkAndShowContextualSuggestion();
+            }
         }, 1200);
     }
 
@@ -58,12 +93,36 @@ class App {
     }
 
     handleRoute() {
-        const rawHash = window.location.hash.replace('#', '') || 'dashboard';
+        const isSessionActive = sessionStorage.getItem('mindwallet_session_active') === 'true';
         const user = store.getCurrentUser();
+        const isAuthenticated = !!(user && isSessionActive);
 
-        if (!user && rawHash !== 'login') {
+        const rawHash = window.location.hash.replace('#', '');
+
+        // Route Gatekeeper: If unauthenticated, lock down ALL pages to #login
+        if (!isAuthenticated) {
             this.currentView = 'login';
-            window.location.hash = '#login';
+            if (window.location.hash !== '#login') {
+                window.location.hash = '#login';
+                return;
+            }
+            this.renderCurrentView();
+            this.updateActiveNav('login');
+            this.updateUserProfileUI();
+            this.updateNotificationsUI();
+            document.title = 'Sign In & Profile Setup — MindWallet';
+            const content = document.getElementById('app-content');
+            if (content) {
+                const heading = content.querySelector('h1');
+                if (heading) heading.focus();
+            }
+            return;
+        }
+
+        // Authenticated: default empty hash or #login redirects straight to dashboard
+        if (!rawHash || rawHash === 'login') {
+            this.currentView = 'dashboard';
+            window.location.hash = '#dashboard';
             return;
         }
 
@@ -71,9 +130,7 @@ class App {
         let parentView = 'dashboard';
         let subTab = null;
 
-        if (rawHash === 'login') {
-            parentView = 'login';
-        } else if (rawHash === 'settings') {
+        if (rawHash === 'settings') {
             parentView = 'settings';
         } else if (rawHash === 'activity' || rawHash === 'transactions' || rawHash === 'reports') {
             parentView = 'activity';
@@ -103,7 +160,7 @@ class App {
             plan: subTab === 'savings' ? 'Savings Goals' : (subTab === 'subscriptions' ? 'Subscription Manager' : 'Budget Planner'),
             insights: subTab === 'analytics' ? 'Analytics & Trends' : (subTab === 'simulator' ? 'Purchase Simulator' : (subTab === 'nudges' ? 'Smart Insights' : 'Financial Health Score')),
             settings: 'Settings & Personas',
-            login: 'Sign In'
+            login: 'Sign In & Profile Setup'
         };
         const titleName = viewTitles[parentView] || 'Overview Dashboard';
         document.title = `${titleName} — MindWallet`;
@@ -118,11 +175,19 @@ class App {
             }
         }
 
-        // Trigger contextual suggestion & coach section visit on route change
-        setTimeout(() => {
-            feedback.checkAndShowContextualSuggestion();
-            coach.onSectionVisit(parentView);
-        }, 800);
+        // Manage floating notifications based on view
+        if (parentView === 'login') {
+            coach.clearAll();
+            feedback.clearFloatingFeedback();
+        } else {
+            // Trigger contextual suggestion & coach section visit only on authenticated route changes
+            setTimeout(() => {
+                if (store.getCurrentUser() && this.currentView !== 'login') {
+                    feedback.checkAndShowContextualSuggestion();
+                    coach.onSectionVisit(parentView);
+                }
+            }, 800);
+        }
     }
 
     switchSubTab(view, tab) {
@@ -157,8 +222,9 @@ class App {
         const menuToggle = document.getElementById('menuToggle');
         if (!sidebar) return;
 
+        const isSessionActive = sessionStorage.getItem('mindwallet_session_active') === 'true';
         const user = store.getCurrentUser();
-        if (!user) {
+        if (!user || !isSessionActive) {
             sidebar.setAttribute('inert', '');
             if (menuToggle) menuToggle.setAttribute('aria-expanded', 'false');
             return;
@@ -185,10 +251,12 @@ class App {
     }
 
     updateUserProfileUI() {
+        const isSessionActive = sessionStorage.getItem('mindwallet_session_active') === 'true';
         const user = store.getCurrentUser();
+        const isAuthenticated = !!(user && isSessionActive);
         const body = document.body;
 
-        if (user) {
+        if (isAuthenticated) {
             body.classList.remove('logged-out');
             const userBtn = document.getElementById('userProfileBtn');
             const badge = document.getElementById('userAvatarBadge');
@@ -216,8 +284,9 @@ class App {
         const content = document.getElementById('app-content');
         if (!content) return;
 
+        const isSessionActive = sessionStorage.getItem('mindwallet_session_active') === 'true';
         const user = store.getCurrentUser();
-        if (!user || this.currentView === 'login') {
+        if (!user || !isSessionActive || this.currentView === 'login') {
             content.innerHTML = renderLogin();
             window.scrollTo(0, 0);
             return;
@@ -364,30 +433,43 @@ class App {
 
     handlePersonaChange(personaKey) {
         const previousPersona = store.getSettings().persona || 'student';
+        if (previousPersona === personaKey) return;
+
         store.applyPersona(personaKey);
 
         this.applySettings(store.getSettings());
         this.renderCurrentView();
         this.updateUserProfileUI();
         this.updateTopbarPersonaSelect();
+        this.updateNotificationsUI();
 
         const currentUser = store.getCurrentUser();
-        feedback.showToast(`Switched to profile: ${currentUser?.name || personaKey}`, 'success');
+        const previousPreset = store.PERSONA_PRESETS?.[previousPersona] || { name: previousPersona.replace('_', ' ') };
 
-        // Show what changed coach card with undo capability
+        const revertProfile = () => {
+            store.applyPersona(previousPersona, {}, true, true);
+            this.applySettings(store.getSettings());
+            this.renderCurrentView();
+            this.updateUserProfileUI();
+            this.updateTopbarPersonaSelect();
+            this.updateNotificationsUI();
+            coach.clearAll();
+            feedback.showToast(`Reverted back to profile: ${previousPreset.name}.`, 'info');
+        };
+
+        // Action toast with explicit undo callback
+        feedback.showToast(`Switched to profile: ${currentUser?.name || personaKey}`, 'success', {
+            label: 'Undo',
+            onUndo: revertProfile
+        });
+
+        // Show what changed coach card with matching undo capability
         const changes = onboarding.getChangesDescription(personaKey);
         coach.onPersonaChanged(
             previousPersona.replace('_', ' '),
             personaKey.replace('_', ' '),
             changes,
-            () => {
-                store.applyPersona(previousPersona);
-                this.applySettings(store.getSettings());
-                this.renderCurrentView();
-                this.updateUserProfileUI();
-                this.updateTopbarPersonaSelect();
-                feedback.showToast(`Reverted back to ${previousPersona}.`, 'info');
-            }
+            revertProfile
         );
     }
 
@@ -781,6 +863,108 @@ class App {
         }
     }
 
+    // --- MongoDB Atlas Cloud Database Integration ---
+    setupDbSyncUI() {
+        const btn = document.getElementById('dbSyncBtn');
+        const dot = document.getElementById('dbSyncDot');
+        const lbl = document.getElementById('dbSyncLabel');
+
+        api.onStatusChange(status => {
+            if (btn && dot && lbl) {
+                if (status.isConnected) {
+                    btn.classList.add('connected');
+                    btn.classList.remove('offline');
+                    btn.setAttribute('title', `MongoDB Atlas: Connected (${status.database || 'mindwallet'})`);
+                    lbl.textContent = 'MongoDB Atlas';
+                } else {
+                    btn.classList.add('offline');
+                    btn.classList.remove('connected');
+                    btn.setAttribute('title', 'MongoDB Atlas: Offline (LocalStorage Active)');
+                    lbl.textContent = 'Local Mode';
+                }
+            }
+        });
+
+        if (btn) {
+            btn.addEventListener('click', () => {
+                this.openDbModal();
+            });
+        }
+    }
+
+    async openDbModal() {
+        const modal = document.getElementById('modal-db-sync');
+        if (!modal) return;
+
+        this.previousActiveElement = document.activeElement;
+        modal.classList.add('open');
+        this.activeModal = modal;
+
+        // Fetch fresh health info from MongoDB Atlas
+        const health = await api.checkHealth();
+        const dot = document.getElementById('dbModalDot');
+        const text = document.getElementById('dbModalStatusText');
+        const cluster = document.getElementById('dbModalClusterName');
+        const desc = document.getElementById('dbModalDesc');
+        const usersEl = document.getElementById('dbStatUsers');
+        const txsEl = document.getElementById('dbStatTxs');
+        const budgetsEl = document.getElementById('dbStatBudgets');
+        const goalsEl = document.getElementById('dbStatGoals');
+        const latencyEl = document.getElementById('dbSyncLatency');
+
+        if (health && health.database?.connected) {
+            if (dot) dot.className = 'db-sync-dot connected';
+            if (text) text.textContent = 'Connected & Operational';
+            if (cluster) cluster.textContent = `${health.database.database} (Atlas)`;
+            if (desc) desc.textContent = 'MindWallet is synced with your MongoDB Atlas cloud database. All actions persist across devices and browsers.';
+            const counts = health.database.counts || {};
+            if (usersEl) usersEl.textContent = counts.users || '4';
+            if (txsEl) txsEl.textContent = counts.transactions || store.getTransactions().length;
+            if (budgetsEl) budgetsEl.textContent = counts.budgets || store.getBudgets().length;
+            if (goalsEl) goalsEl.textContent = counts.goals || store.getGoals().length;
+            if (latencyEl) latencyEl.textContent = 'Connected (Cloud)';
+        } else {
+            if (dot) dot.className = 'db-sync-dot offline';
+            if (text) text.textContent = 'Offline / LocalStorage Active';
+            if (cluster) cluster.textContent = 'Local Fallback';
+            if (desc) desc.textContent = 'MongoDB Atlas server is currently offline or unreachable. MindWallet is safely running in offline mode using localStorage.';
+            if (usersEl) usersEl.textContent = '1';
+            if (txsEl) txsEl.textContent = store.getTransactions().length;
+            if (budgetsEl) budgetsEl.textContent = store.getBudgets().length;
+            if (goalsEl) goalsEl.textContent = store.getGoals().length;
+            if (latencyEl) latencyEl.textContent = 'Offline';
+        }
+    }
+
+    async testDbConnection() {
+        const start = performance.now();
+        feedback.showToast('Testing MongoDB Atlas connection...', 'info');
+        const health = await api.checkHealth();
+        const elapsed = Math.round(performance.now() - start);
+
+        if (health && health.database?.connected) {
+            feedback.showToast(`MongoDB Atlas online! Response time: ${elapsed}ms`, 'success');
+        } else {
+            feedback.showToast('Unable to reach MongoDB Atlas server. Offline fallback active.', 'warning');
+        }
+        const latencyEl = document.getElementById('dbSyncLatency');
+        if (latencyEl) latencyEl.textContent = health?.database?.connected ? `${elapsed}ms` : 'Offline';
+    }
+
+    async triggerManualSync() {
+        feedback.showToast('Syncing with MongoDB Atlas...', 'info');
+        const success = await store.syncWithCloud();
+        if (success) {
+            this.renderCurrentView();
+            this.updateNotificationsUI();
+            feedback.showToast('Cloud database synchronized successfully with MongoDB Atlas!', 'success');
+            const syncTimeEl = document.getElementById('dbLastSyncTime');
+            if (syncTimeEl) syncTimeEl.textContent = new Date().toLocaleTimeString();
+        } else {
+            feedback.showToast('Sync complete with local storage. MongoDB Atlas connection deferred.', 'info');
+        }
+    }
+
     // Accessible Action Dialog Delegation
     openActionDialog(config) {
         feedback.openDialog(config);
@@ -850,26 +1034,128 @@ class App {
     }
 
     filterTransactions() {
-        const query = (document.getElementById('tx-search-input')?.value || '').toLowerCase();
-        const cat = document.getElementById('tx-category-filter')?.value || 'all';
-        const type = document.getElementById('tx-type-filter')?.value || 'all';
+        // Read DOM inputs if available to keep filterState in sync
+        const searchInput = document.getElementById('tx-search-input');
+        if (searchInput) this.txFilterState.search = searchInput.value.trim();
 
-        let txs = store.getTransactions();
+        const catFilter = document.getElementById('tx-category-filter');
+        if (catFilter) this.txFilterState.category = catFilter.value;
 
-        if (query) {
-            txs = txs.filter(t => (t.merchant || '').toLowerCase().includes(query) || (t.category || '').toLowerCase().includes(query));
-        }
-        if (cat !== 'all') {
-            txs = txs.filter(t => (t.category || '').toLowerCase() === cat.toLowerCase());
-        }
-        if (type !== 'all') {
-            txs = txs.filter(t => t.type === type);
-        }
+        const typeFilter = document.getElementById('tx-type-filter');
+        if (typeFilter) this.txFilterState.type = typeFilter.value;
+
+        const dateFilter = document.getElementById('tx-date-filter');
+        if (dateFilter) this.txFilterState.dateRange = dateFilter.value;
+
+        const necFilter = document.getElementById('tx-necessity-filter');
+        if (necFilter) this.txFilterState.necessity = necFilter.value;
+
+        const sortBySelect = document.getElementById('tx-sort-by');
+        if (sortBySelect) this.txFilterState.sortBy = sortBySelect.value;
+
+        const allTxs = store.getTransactions();
+        const filtered = filterAndSortTransactions(allTxs, this.txFilterState);
 
         const tbody = document.getElementById('tx-table-body');
         if (tbody) {
-            tbody.innerHTML = renderTxRows(txs, store.getSettings().currency);
+            tbody.innerHTML = renderTxRows(filtered, store.getSettings().currency);
         }
+
+        const countEl = document.getElementById('tx-count-indicator');
+        if (countEl) {
+            if (filtered.length === allTxs.length) {
+                countEl.textContent = `Showing all ${allTxs.length} transactions`;
+            } else {
+                countEl.textContent = `Showing ${filtered.length} of ${allTxs.length} transactions`;
+            }
+        }
+
+        this.updateSortControlsUI();
+    }
+
+    updateSortControlsUI() {
+        const { sortBy, sortOrder } = this.txFilterState;
+        const sortSelect = document.getElementById('tx-sort-by');
+        if (sortSelect && sortSelect.value !== sortBy) {
+            sortSelect.value = sortBy;
+        }
+
+        const sortBtn = document.getElementById('tx-sort-order-btn');
+        const iconSpan = document.getElementById('tx-sort-order-icon');
+        const labelSpan = document.getElementById('tx-sort-order-label');
+        if (sortBtn && iconSpan && labelSpan) {
+            const isAsc = sortOrder === 'asc';
+            iconSpan.textContent = isAsc ? '↑' : '↓';
+            labelSpan.textContent = isAsc ? 'Asc' : 'Desc';
+            sortBtn.setAttribute('aria-label', `Toggle sort order: currently ${isAsc ? 'Ascending' : 'Descending'}`);
+        }
+
+        // Update table header aria-sort and icons
+        ['merchant', 'date', 'amount'].forEach(col => {
+            const th = document.getElementById(`th-sort-${col}`);
+            if (!th) return;
+            const icon = th.querySelector('.sort-icon');
+            if (sortBy === col) {
+                const isAsc = sortOrder === 'asc';
+                th.setAttribute('aria-sort', isAsc ? 'ascending' : 'descending');
+                if (icon) icon.textContent = isAsc ? '↑' : '↓';
+            } else {
+                th.setAttribute('aria-sort', 'none');
+                if (icon) icon.textContent = '↕';
+            }
+        });
+    }
+
+    onTxSortChange(val) {
+        this.txFilterState.sortBy = val;
+        this.filterTransactions();
+    }
+
+    toggleTxSort(col) {
+        if (this.txFilterState.sortBy === col) {
+            this.txFilterState.sortOrder = this.txFilterState.sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.txFilterState.sortBy = col;
+            this.txFilterState.sortOrder = col === 'merchant' ? 'asc' : 'desc';
+        }
+        this.filterTransactions();
+    }
+
+    toggleTxSortOrder() {
+        this.txFilterState.sortOrder = this.txFilterState.sortOrder === 'asc' ? 'desc' : 'asc';
+        this.filterTransactions();
+    }
+
+    resetTransactionFilters() {
+        this.txFilterState = {
+            search: '',
+            category: 'all',
+            type: 'all',
+            dateRange: 'all',
+            necessity: 'all',
+            sortBy: 'date',
+            sortOrder: 'desc'
+        };
+
+        const searchInput = document.getElementById('tx-search-input');
+        if (searchInput) searchInput.value = '';
+
+        const catFilter = document.getElementById('tx-category-filter');
+        if (catFilter) catFilter.value = 'all';
+
+        const typeFilter = document.getElementById('tx-type-filter');
+        if (typeFilter) typeFilter.value = 'all';
+
+        const dateFilter = document.getElementById('tx-date-filter');
+        if (dateFilter) dateFilter.value = 'all';
+
+        const necFilter = document.getElementById('tx-necessity-filter');
+        if (necFilter) necFilter.value = 'all';
+
+        const sortBySelect = document.getElementById('tx-sort-by');
+        if (sortBySelect) sortBySelect.value = 'date';
+
+        this.filterTransactions();
     }
 
     // --- Budget Handlers ---
@@ -1368,6 +1654,14 @@ class App {
         const badgeDot = document.getElementById('notifBadgeDot');
         const badgeText = document.getElementById('notifBadgeText');
         const drawerContent = document.getElementById('notifDrawerContent');
+        const isSessionActive = sessionStorage.getItem('mindwallet_session_active') === 'true';
+
+        if (!store.getCurrentUser() || !isSessionActive || this.currentView === 'login') {
+            if (badgeDot) badgeDot.style.display = 'none';
+            if (drawerContent) drawerContent.innerHTML = `<p class="notif-empty-msg" style="padding:24px 16px; text-align:center; color:var(--text-muted); font-size:var(--text-sm);">Please sign in to view alerts.</p>`;
+            return;
+        }
+
         const notifs = store.getNotifications();
         const unreadCount = store.getUnreadNotificationCount();
 
@@ -1479,13 +1773,14 @@ class App {
     }
 
     handleQuickPersonaLogin(personaKey) {
+        sessionStorage.setItem('mindwallet_session_active', 'true');
         store.applyPersona(personaKey, {}, false);
         this.applySettings(store.getSettings());
         this.updateUserProfileUI();
         this.updateSidebarA11y();
         this.updateTopbarPersonaSelect();
         const user = store.getCurrentUser();
-        feedback.showToast(`Signed in as ${user?.name || personaKey}`, 'success');
+        feedback.showToast(`Welcome! Profile set up as ${user?.name || personaKey}`, 'success');
         window.location.hash = '#dashboard';
         this.handleRoute();
     }
@@ -1499,6 +1794,7 @@ class App {
             const personaRole = document.getElementById('login-persona')?.value || null;
 
             const user = store.login(email, pass, personaRole);
+            sessionStorage.setItem('mindwallet_session_active', 'true');
             if (alertEl) alertEl.style.display = 'none';
             this.applySettings(store.getSettings());
             this.updateUserProfileUI();
@@ -1526,6 +1822,7 @@ class App {
             const personaRole = document.getElementById('reg-role').value;
 
             const user = store.register(name, email, personaRole, personaRole);
+            sessionStorage.setItem('mindwallet_session_active', 'true');
             if (alertEl) alertEl.style.display = 'none';
 
             this.applySettings(store.getSettings());
@@ -1552,6 +1849,7 @@ class App {
     }
 
     handleGuestLoginSubmit() {
+        sessionStorage.setItem('mindwallet_session_active', 'true');
         const user = store.loginAsGuest();
         this.updateUserProfileUI();
         this.updateSidebarA11y();
@@ -1568,6 +1866,9 @@ class App {
             confirmText: 'Sign Out',
             isDanger: true,
             onConfirm: () => {
+                coach.clearAll();
+                feedback.clearFloatingFeedback();
+                sessionStorage.removeItem('mindwallet_session_active');
                 store.logout();
                 document.getElementById('profilePanel')?.classList.remove('open');
                 this.updateUserProfileUI();

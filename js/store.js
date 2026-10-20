@@ -1,7 +1,8 @@
 /* MindWallet — Central Store & Persistence Layer (Async-Ready Data Store) */
 import { PERSONA_PRESETS, getPersona, getAllPersonas, resolvePersonaKey } from './personas.js';
+import { api } from './api.js';
 
-export { PERSONA_PRESETS, getPersona, getAllPersonas, resolvePersonaKey };
+export { PERSONA_PRESETS, getPersona, getAllPersonas, resolvePersonaKey, api };
 
 const STORAGE_KEYS = {
     TRANSACTIONS: 'mindwallet_transactions',
@@ -91,38 +92,34 @@ class Store {
             localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(storedSettings));
         }
 
-        if (!localStorage.getItem(STORAGE_KEYS.TRANSACTIONS)) {
-            localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(defaultPreset.starterData.transactions));
-        }
-        if (!localStorage.getItem(STORAGE_KEYS.BUDGETS)) {
-            localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(defaultPreset.starterData.budgets));
-        }
-        if (!localStorage.getItem(STORAGE_KEYS.GOALS)) {
-            localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(defaultPreset.starterData.goals));
-        }
-        if (!localStorage.getItem(STORAGE_KEYS.SUBSCRIPTIONS)) {
-            localStorage.setItem(STORAGE_KEYS.SUBSCRIPTIONS, JSON.stringify(defaultPreset.starterData.subscriptions));
-        }
-        if (!localStorage.getItem(STORAGE_KEYS.AUTH)) {
-            localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify({
-                id: 'usr-' + activePersona,
-                name: defaultPreset.name,
-                email: `${defaultPreset.name.toLowerCase().replace(/[^a-z0-9]/g, '')}@mindwallet.local`,
-                role: defaultPreset.role,
-                avatar: defaultPreset.avatar
-            }));
-        }
-        if (!localStorage.getItem(STORAGE_KEYS.DEPOSITS)) {
-            // Track monthly goal deposits: [{ id, goalId, goalName, amount, date }]
-            localStorage.setItem(STORAGE_KEYS.DEPOSITS, JSON.stringify([
-                { id: 'dep-1', goalId: defaultPreset.starterData?.goals?.[0]?.id || 'g-1', goalName: defaultPreset.starterData?.goals?.[0]?.name || 'Primary Reserve', amount: 3000, date: getRelativeDate(-3) }
-            ]));
-        }
+        // Initialize dedicated, isolated profile snapshots for all 4 personas if not yet present
+        const allProfiles = ['student', 'working_professional', 'elderly_retiree', 'goal_saver'];
+        allProfiles.forEach(pKey => {
+            const snapKey = `mindwallet_profile_${pKey}_data`;
+            if (!localStorage.getItem(snapKey)) {
+                const preset = PERSONA_PRESETS[pKey] || PERSONA_PRESETS.student;
+                const snap = {
+                    transactions: preset.starterData.transactions,
+                    budgets: preset.starterData.budgets,
+                    goals: preset.starterData.goals,
+                    subscriptions: preset.starterData.subscriptions,
+                    deposits: [
+                        {
+                            id: `dep-${pKey}-1`,
+                            goalId: preset.starterData?.goals?.[0]?.id || 'g-1',
+                            goalName: preset.starterData?.goals?.[0]?.name || 'Primary Reserve',
+                            amount: pKey === 'student' ? 1500 : (pKey === 'working_professional' ? 10000 : (pKey === 'elderly_retiree' ? 2000 : 25000)),
+                            date: getRelativeDate(-2)
+                        }
+                    ],
+                    simulationLog: []
+                };
+                localStorage.setItem(snapKey, JSON.stringify(snap));
+            }
+        });
 
-        // Initialize snapshot for this profile if not yet saved
-        if (!localStorage.getItem(`mindwallet_profile_${activePersona}_data`)) {
-            this.saveProfileSnapshot(activePersona);
-        }
+        // Load active persona's isolated data into active storage
+        this.loadProfileSnapshot(activePersona);
     }
 
     safeParse(key, fallback) {
@@ -216,15 +213,25 @@ class Store {
                 deposits.splice(depIdx, 1);
                 localStorage.setItem(STORAGE_KEYS.DEPOSITS, JSON.stringify(deposits));
             }
+            // Reverse corresponding transaction
+            const txs = this.getTransactions();
+            const txIdx = txs.findIndex(t => t.id === action.txId || (t.merchant === `Deposit: ${action.name}` && Number(t.amount) === action.amount));
+            if (txIdx !== -1) {
+                txs.splice(txIdx, 1);
+                localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(txs));
+            }
+            this.saveCurrentProfileSnapshot();
             return `Deposit of ₹${action.amount.toLocaleString()} into "${action.name}" reversed`;
         } else if (action.type === 'change-persona' || action.type === 'change-mode') {
-            if (action.previousSettings) {
-                localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(action.previousSettings));
-            }
             if (action.previousPersona) {
-                this.applyPersona(action.previousPersona, {}, false);
+                this.applyPersona(action.previousPersona, {}, true, true);
             }
-            return `Settings reverted to ${action.previousPersona ? action.previousPersona.replace('_', ' ') : 'previous configuration'}`;
+            if (action.previousSettings) {
+                const mergedSettings = { ...this.getSettings(), ...action.previousSettings, persona: action.previousPersona };
+                localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(mergedSettings));
+            }
+            const revertedName = PERSONA_PRESETS[action.previousPersona]?.name || (action.previousPersona ? action.previousPersona.replace('_', ' ') : 'previous configuration');
+            return `Reverted to profile: ${revertedName}`;
         }
 
         return 'Action reversed';
@@ -238,10 +245,14 @@ class Store {
     }
 
     getMonthTransactions(targetDate = new Date()) {
+        const allTxs = this.getTransactions();
+        if (!allTxs.length) return [];
+
         const d = targetDate instanceof Date ? targetDate : new Date(targetDate);
         const year = d.getFullYear();
         const month = d.getMonth();
-        return this.getTransactions().filter(t => {
+
+        const currentMonthTxs = allTxs.filter(t => {
             if (!t.date) return false;
             const parts = t.date.split('-');
             if (parts.length < 2) return false;
@@ -249,6 +260,27 @@ class Store {
             const tMonth = parseInt(parts[1], 10) - 1;
             return tYear === year && tMonth === month;
         });
+
+        // If targetDate was default new Date() and yielded 0 transactions, but profile transactions exist,
+        // match the active/most recent transaction month so budget, dashboard, and analytics stay alive!
+        if (currentMonthTxs.length === 0 && allTxs.length > 0) {
+            const sorted = [...allTxs].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+            const latestDate = sorted[0]?.date;
+            if (latestDate) {
+                const parts = latestDate.split('-');
+                if (parts.length >= 2) {
+                    const fallbackYear = parseInt(parts[0], 10);
+                    const fallbackMonth = parseInt(parts[1], 10) - 1;
+                    return allTxs.filter(t => {
+                        if (!t.date) return false;
+                        const p = t.date.split('-');
+                        return parseInt(p[0], 10) === fallbackYear && (parseInt(p[1], 10) - 1) === fallbackMonth;
+                    });
+                }
+            }
+        }
+
+        return currentMonthTxs;
     }
 
     addTransaction(tx) {
@@ -264,6 +296,7 @@ class Store {
             type: 'add-transaction',
             data: tx
         });
+        this.syncWithCloud();
         return tx;
     }
 
@@ -281,6 +314,7 @@ class Store {
             type: 'delete-transaction',
             data: removedTx
         });
+        this.syncWithCloud();
         return removedTx;
     }
 
@@ -315,6 +349,7 @@ class Store {
             previousLimit,
             newLimit: limit
         });
+        this.syncWithCloud();
         return budgets;
     }
 
@@ -332,6 +367,7 @@ class Store {
         goals.push(goal);
         localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(goals));
         this.saveCurrentProfileSnapshot();
+        this.syncWithCloud();
         return goal;
     }
 
@@ -353,14 +389,35 @@ class Store {
                 date: new Date().toISOString().split('T')[0]
             });
             localStorage.setItem(STORAGE_KEYS.DEPOSITS, JSON.stringify(deposits));
+
+            // Automatically log matching expense transaction so Activity, Plan, and Dashboard stay in sync
+            const depTx = {
+                id: 'tx-dep-' + Date.now(),
+                merchant: `Deposit: ${g.name}`,
+                category: 'Savings Transfer',
+                amount: depositAmt,
+                type: 'expense',
+                date: new Date().toISOString().split('T')[0],
+                icon: '🎯',
+                iconBg: '#E4F5EE',
+                iconColor: 'var(--emerald)',
+                necessity: 'essential',
+                notes: `Savings goal contribution towards ${g.name}`
+            };
+            const txs = this.getTransactions();
+            txs.unshift(depTx);
+            localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(txs));
+
             this.saveCurrentProfileSnapshot();
 
             this.recordAction({
                 type: 'deposit-goal',
                 id,
                 name: g.name,
-                amount: depositAmt
+                amount: depositAmt,
+                txId: depTx.id
             });
+            this.syncWithCloud();
         }
         return g;
     }
@@ -397,6 +454,7 @@ class Store {
         subs.push(sub);
         localStorage.setItem(STORAGE_KEYS.SUBSCRIPTIONS, JSON.stringify(subs));
         this.saveCurrentProfileSnapshot();
+        this.syncWithCloud();
         return sub;
     }
 
@@ -413,6 +471,7 @@ class Store {
             type: 'delete-subscription',
             data: removedSub
         });
+        this.syncWithCloud();
         return removedSub;
     }
 
@@ -492,7 +551,7 @@ class Store {
         localStorage.setItem(STORAGE_KEYS.SIMULATION_LOG, JSON.stringify(data.simulationLog || []));
     }
 
-    applyPersona(personaKey, modifiers = {}, preserveCustom = true) {
+    applyPersona(personaKey, modifiers = {}, preserveCustom = true, isReverting = false) {
         const currentSettings = this.getSettings();
         const currentProfileKey = resolvePersonaKey(currentSettings.persona || 'student');
 
@@ -567,12 +626,14 @@ class Store {
 
         localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(newSettings));
 
-        this.recordAction({
-            type: 'change-persona',
-            previousPersona: currentProfileKey,
-            previousSettings: currentSettings,
-            newPersona: resolvedKey
-        });
+        if (!isReverting) {
+            this.recordAction({
+                type: 'change-persona',
+                previousPersona: currentProfileKey,
+                previousSettings: currentSettings,
+                newPersona: resolvedKey
+            });
+        }
 
         return { user, settings: newSettings };
     }
@@ -613,6 +674,7 @@ class Store {
             avatar: (formattedName.substring(0, 2)).toUpperCase()
         };
         localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(user));
+        this.syncWithCloud();
         return user;
     }
 
@@ -638,7 +700,75 @@ class Store {
             avatar: initials
         };
         localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(user));
+        this.syncWithCloud();
         return user;
+    }
+
+    /**
+     * Seamless two-way synchronization between client store and MongoDB Atlas
+     */
+    async syncWithCloud() {
+        try {
+            const user = this.getCurrentUser();
+            const persona = resolvePersonaKey(this.getSettings().persona || 'student');
+            const payload = {
+                userId: user?.id || 'guest',
+                persona,
+                transactions: this.getTransactions(),
+                budgets: this.getBudgets(),
+                goals: this.getGoals(),
+                subscriptions: this.getSubscriptions(),
+                settings: this.getSettings()
+            };
+
+            const res = await api.syncAll(payload);
+            if (res && res.cloudData) {
+                const { cloudData } = res;
+                if (Array.isArray(cloudData.transactions) && cloudData.transactions.length > 0) {
+                    const localTxs = this.getTransactions();
+                    if (!localTxs || localTxs.length === 0) {
+                        localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(cloudData.transactions));
+                    } else {
+                        // Enrich local transactions with cloud IDs without resurrecting removed entries
+                        let updated = false;
+                        localTxs.forEach(ltx => {
+                            const match = cloudData.transactions.find(ctx => ctx.merchant === ltx.merchant && ctx.date === ltx.date && Number(ctx.amount) === Number(ltx.amount));
+                            if (match && match._id && ltx.id !== match._id.toString()) {
+                                ltx.cloudId = match._id.toString();
+                                updated = true;
+                            }
+                        });
+                        if (updated) {
+                            localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(localTxs));
+                        }
+                    }
+                }
+                if (Array.isArray(cloudData.budgets) && cloudData.budgets.length > 0) {
+                    const localBudgets = this.getBudgets();
+                    if (!localBudgets || localBudgets.length === 0) {
+                        localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(cloudData.budgets));
+                    }
+                }
+                if (Array.isArray(cloudData.goals) && cloudData.goals.length > 0) {
+                    const localGoals = this.getGoals();
+                    if (!localGoals || localGoals.length === 0) {
+                        localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(cloudData.goals));
+                    }
+                }
+                if (Array.isArray(cloudData.subscriptions) && cloudData.subscriptions.length > 0) {
+                    const localSubs = this.getSubscriptions();
+                    if (!localSubs || localSubs.length === 0) {
+                        localStorage.setItem(STORAGE_KEYS.SUBSCRIPTIONS, JSON.stringify(cloudData.subscriptions));
+                    }
+                }
+                this.saveCurrentProfileSnapshot();
+                return true;
+            }
+            return false;
+        } catch (e) {
+            console.warn('Background MongoDB Atlas sync deferred:', e);
+            return false;
+        }
     }
 
     loginAsGuest(personaKey = 'student') {

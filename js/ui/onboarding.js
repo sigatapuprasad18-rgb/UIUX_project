@@ -345,10 +345,13 @@ class OnboardingWizard {
             newPersona.replace('_', ' '),
             changes,
             () => {
-                store.applyPersona(previousPersona, {});
+                store.applyPersona(previousPersona, {}, true, true);
                 if (window.app) {
                     window.app.applySettings(store.getSettings());
                     window.app.renderCurrentView();
+                    window.app.updateUserProfileUI();
+                    window.app.updateTopbarPersonaSelect?.();
+                    window.app.updateNotificationsUI?.();
                 }
                 feedback.showToast(`Reverted back to ${previousPersona}.`, 'info');
             }

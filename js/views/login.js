@@ -11,25 +11,27 @@ export function renderLogin() {
                 
                 <!-- Prototype Header Badge -->
                 <div style="background:var(--status-info-bg); border:1px solid var(--status-info-border); padding:10px 14px; border-radius:10px; margin-bottom:24px; display:flex; align-items:center; gap:10px;">
-                    <span style="font-size:1.3rem;" aria-hidden="true">ℹ️</span>
+                    <span style="font-size:1.3rem;" aria-hidden="true">🔐</span>
                     <div>
-                        <div style="font-weight:700; font-size:var(--text-xs); color:var(--status-info-text); text-transform:uppercase; letter-spacing:0.04em;">DEMO EVALUATION PROTOTYPE</div>
+                        <div style="font-weight:700; font-size:var(--text-xs); color:var(--status-info-text); text-transform:uppercase; letter-spacing:0.04em;">PROFILE SETUP REQUIRED</div>
                         <div style="font-size:var(--text-xs); color:var(--status-info-text); margin-top:2px;">
-                            Client-side prototype with isolated account profiles. Each profile preserves its own transactions, budgets, and goals.
+                            Please select a profile persona below or sign in to set up your isolated financial workspace and unlock your dashboard.
                         </div>
                     </div>
                 </div>
 
                 <div style="text-align:center; margin-bottom:24px;">
-                    <div class="brand-mark" style="width:52px; height:52px; font-size:1.5rem; margin:0 auto 12px; border-radius:14px;"><span aria-hidden="true">💳</span></div>
-                    <h1 style="font-size:1.75rem; font-weight:700;" tabindex="-1">Welcome to MindWallet</h1>
-                    <p style="color:var(--text-muted); font-size:0.95rem; margin-top:4px;">Select your financial profile archetype to begin</p>
+                    <div class="brand-mark" style="width:54px; height:54px; font-size:1.6rem; margin:0 auto 12px; border-radius:14px;"><span aria-hidden="true">💳</span></div>
+                    <h1 style="font-size:1.75rem; font-weight:700;" tabindex="-1">Sign In & Profile Setup</h1>
+                    <p style="color:var(--text-muted); font-size:0.95rem; margin-top:6px; max-width:540px; margin-left:auto; margin-right:auto;">
+                        Select your financial profile archetype to configure tailored budgets, goals, and interface pacing before entering your dashboard.
+                    </p>
                 </div>
 
                 <!-- Profile Archetypes Grid -->
                 <div style="margin-bottom:28px;">
                     <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px; display:flex; align-items:center; gap:6px;">
-                        <span>👥</span> Choose User Profile Archetype
+                        <span>👥</span> Select Persona Archetype to Set Up Workspace
                     </div>
                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:12px;">
                         
@@ -49,7 +51,7 @@ export function renderLogin() {
                                 Pocket money, campus cafeteria, textbooks & supplies, and 24h cooling-off buffer on impulse wants.
                             </p>
                             <button type="button" class="btn btn-primary btn-sm" style="width:100%; justify-content:center; font-weight:600;">
-                                Log In as Student (Alex) →
+                                Set Up & Open Dashboard (Alex) →
                             </button>
                         </div>
 
@@ -69,7 +71,7 @@ export function renderLogin() {
                                 Corporate salary, apartment rent, SIP mutual funds, subscription audits & zero-based variance analysis.
                             </p>
                             <button type="button" class="btn btn-outline btn-sm" style="width:100%; justify-content:center; font-weight:600;">
-                                Log In as Professional (Priya) →
+                                Set Up & Open Dashboard (Priya) →
                             </button>
                         </div>
 
@@ -89,7 +91,7 @@ export function renderLogin() {
                                 Fixed pension, pharmacy prescriptions, doctor consultations, with senior mode (≥52px touch targets).
                             </p>
                             <button type="button" class="btn btn-outline btn-sm" style="width:100%; justify-content:center; font-weight:600;">
-                                Log In as Senior (Eleanor) →
+                                Set Up & Open Dashboard (Eleanor) →
                             </button>
                         </div>
 
@@ -109,7 +111,7 @@ export function renderLogin() {
                                 House down-payment, travel expedition milestones, delayed gratification & purchase ETA delay simulator.
                             </p>
                             <button type="button" class="btn btn-outline btn-sm" style="width:100%; justify-content:center; font-weight:600;">
-                                Log In as Saver (Rohan) →
+                                Set Up & Open Dashboard (Rohan) →
                             </button>
                         </div>
 
@@ -166,7 +168,7 @@ export function renderLogin() {
                         </div>
 
                         <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px; font-size:1rem; padding:12px;">
-                            Sign In with Selected Profile →
+                            Sign In & Open Dashboard →
                         </button>
                     </form>
 
@@ -193,7 +195,7 @@ export function renderLogin() {
                         </div>
 
                         <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px; font-size:1rem; padding:12px;">
-                            Create Account & Personalize →
+                            Create Profile & Open Dashboard →
                         </button>
                     </form>
                 </div>

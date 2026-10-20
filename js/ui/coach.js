@@ -30,6 +30,11 @@ class CoachCardManager {
     show(options) {
         if (!options || !options.message) return;
 
+        // Strictly suppress coach cards on login view or unauthenticated sessions
+        if (!store.getCurrentUser() || (window.app && window.app.currentView === 'login')) {
+            return;
+        }
+
         // Respect permanent dismissal for section tips
         if (options.permDismissKey && store.isDismissed(options.permDismissKey)) {
             return;
@@ -57,9 +62,30 @@ class CoachCardManager {
         }
     }
 
+    clearAll() {
+        this.queue = [];
+        if (this.timer) {
+            clearTimeout(this.timer);
+            this.timer = null;
+        }
+        this.currentCard = null;
+        const existing = document.getElementById('active-coach-card');
+        if (existing) existing.remove();
+    }
+
     displayCard(cardItem) {
+        // Strictly suppress display if user navigated to login or logged out
+        if (!store.getCurrentUser() || (window.app && window.app.currentView === 'login')) {
+            this.clearAll();
+            return;
+        }
+
         this.currentCard = cardItem;
         const container = document.getElementById(this.containerId) || document.body;
+
+        // Dismiss any existing contextual suggestion to prevent bottom-right clutter
+        const existingSuggestion = container.querySelector('.floating-feedback-card');
+        if (existingSuggestion) existingSuggestion.remove();
 
         // Clean up any existing card element
         const existing = document.getElementById('active-coach-card');
@@ -400,6 +426,10 @@ class CoachCardManager {
      * Triggered upon first visit to a new section (with "Don't show again")
      */
     onSectionVisit(sectionKey) {
+        if (!sectionKey || sectionKey === 'login' || !store.getCurrentUser() || (window.app && window.app.currentView === 'login')) {
+            return;
+        }
+
         const visitedKey = `mindwallet_visited_${sectionKey}`;
         if (localStorage.getItem(visitedKey) === 'true') {
             return;
