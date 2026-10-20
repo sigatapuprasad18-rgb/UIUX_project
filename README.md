@@ -47,10 +47,13 @@
    - **Insights**: Financial Health Score (`#health`), Analytics & Trends (`#analytics`), Purchase Simulator (`#simulator`)
    - **Settings**: Accessibility Modifiers & Profile Archetypes (`#settings`)
 
-7. **Floating Feedback & Interaction System (`js/ui/feedback.js` & `js/ui/coach.js`)**:
+7. **Floating Feedback & Calm Notification Architecture (`js/ui/feedback.js`, `js/ui/coach.js` & `css/style.css`)**:
+   - **Calm Login & Strict Minimal Popups**: Prevents cognitive overload by completely eliminating notification bombardment upon signing in. Only genuine **ASAP essentials** (e.g., budget exceeded ≥100% or subscription due today) trigger alert toasts.
+   - **Centralized Bell Notification Drawer**: Non-urgent items (75–90% budget notices, 7-day subscription renewals, goal milestones, and proactive tips) are shifted silently under the Bell icon with a clean unread badge counter.
+   - **Unobstructed Floating Action Layout**: Floating feedback cards are anchored at `bottom: 96px` (desktop) and `bottom: 84px` (mobile), guaranteeing that the Quick-Add (`+`) Floating Action Button and all page controls remain completely visible and unobstructed when switching personas.
+   - **Consolidated Persona Switch Feedback**: Single unified feedback card explaining layout adaptations with instant 1-click `Revert` undo, eliminating duplicate competing popups.
    - **Action Toasts with Real Undo**: Reversible 1-click restore for transaction additions/deletions, profile switches, and budget threshold adjustments.
    - **Accessible Action Dialogs**: Replaces disruptive browser-native `confirm()` and `prompt()` with keyboard-trapped, screen-reader announced modal dialogs.
-   - **Behavioral Financial Coach**: Contextual micro-guidance after logging expenses or crossing budget capacity.
 
 ---
 

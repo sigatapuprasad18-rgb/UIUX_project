@@ -2327,7 +2327,7 @@ body.high-contrast .hero-card {
 /* Floating Feedback Container (AI Coach & Contextual Suggestions at Bottom-Right) */
 #floating-feedback-container {
     position: fixed;
-    bottom: 24px;
+    bottom: 96px; /* Lifted above the 56px Quick-Add FAB + 28px margin so buttons are never covered */
     right: 24px;
     z-index: 280;
     display: flex;
@@ -2509,7 +2509,7 @@ body.reduced-motion .coach-card {
     #floating-feedback-container {
         left: 16px;
         right: 16px;
-        bottom: 16px;
+        bottom: 84px; /* Clear mobile Quick-Add FAB */
         width: auto;
         max-width: none;
     }
@@ -2836,7 +2836,7 @@ body.dark-mode .persona-card.selected .persona-card-title {
     #floating-feedback-container {
         left: 16px;
         right: 16px;
-        bottom: 16px;
+        bottom: 84px; /* Clear mobile Quick-Add FAB */
         width: auto;
         max-width: none;
     }

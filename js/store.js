@@ -1248,45 +1248,51 @@ class Store {
         const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
         const daysRemaining = Math.max(0, daysInMonth - today.getDate());
 
-        // 1. Budget Alerts (>= 75% utilized)
+        // 1. Budget Alerts (>= 75% warning, >= 100% urgent critical)
         budgets.forEach(b => {
             const spent = monthTxs
-                .filter(t => t.type === 'expense' && (t.category || '').toLowerCase() === b.category.toLowerCase())
+                .filter(t => t.type === 'expense' && (t.category || '').toLowerCase().trim() === (b.category || '').toLowerCase().trim())
                 .reduce((sum, t) => sum + Number(t.amount), 0);
             const pct = Math.round((spent / b.limit) * 100);
             if (pct >= 75) {
+                const isOver = pct >= 100;
                 const isCritical = pct >= 90;
                 notifs.push({
                     id: `notif-budget-${b.id || b.category}`,
                     icon: b.icon || '🛒',
-                    title: `${b.category} Budget Notice`,
-                    message: `You reached ${pct}% of your ₹${b.limit.toLocaleString()} monthly limit (${daysRemaining} days left).`,
+                    title: isOver ? `${b.category} Budget Exceeded` : `${b.category} Budget Notice`,
+                    message: isOver 
+                        ? `Over limit by ₹${(spent - b.limit).toLocaleString()} (${pct}% spent).`
+                        : `You reached ${pct}% of your ₹${b.limit.toLocaleString()} monthly limit (${daysRemaining} days left).`,
                     level: isCritical ? 'critical' : 'warning',
+                    isUrgent: isOver,
                     route: '#budget'
                 });
             }
         });
 
-        // 2. Subscriptions Renewing within 7 Days
+        // 2. Subscriptions Renewing (diffDays === 0 is urgent today)
         const subs = this.getSubscriptions();
         subs.forEach(s => {
             if (s.nextBilling) {
                 const billDate = new Date(s.nextBilling);
                 const diffDays = Math.ceil((billDate - today) / (1000 * 60 * 60 * 24));
                 if (diffDays >= 0 && diffDays <= 7) {
+                    const isDueToday = diffDays === 0;
                     notifs.push({
                         id: `notif-sub-${s.id || s.name}`,
                         icon: s.icon || '🔁',
-                        title: `${s.name} Renewal`,
-                        message: `₹${Number(s.amount).toLocaleString()} recurring charge scheduled for ${s.nextBilling} (${diffDays === 0 ? 'today' : 'in ' + diffDays + ' days'}).`,
-                        level: 'info',
+                        title: isDueToday ? `${s.name} Renews Today` : `${s.name} Renewal`,
+                        message: `₹${Number(s.amount).toLocaleString()} recurring charge scheduled for ${s.nextBilling} (${isDueToday ? 'today' : 'in ' + diffDays + ' days'}).`,
+                        level: isDueToday ? 'critical' : 'info',
+                        isUrgent: isDueToday,
                         route: '#subscriptions'
                     });
                 }
             }
         });
 
-        // 3. Goal Milestones
+        // 3. Goal Milestones (non-urgent, under Bell icon)
         const goals = this.getGoals();
         goals.forEach(g => {
             const pct = Math.min(100, Math.round((g.current / g.target) * 100));
@@ -1299,12 +1305,33 @@ class Store {
                     title: `${g.name} Milestone`,
                     message: `${pct}% reached! Estimated completion in ~${monthsLeft} month${monthsLeft === 1 ? '' : 's'}.`,
                     level: 'success',
+                    isUrgent: false,
                     route: '#savings'
                 });
             }
         });
 
+        // 4. Proactive Financial Tips (Shifted silently under Bell icon)
+        const suggestion = this.getContextualSuggestion();
+        if (suggestion && !this.isDismissed(suggestion.id)) {
+            notifs.push({
+                id: `notif-tip-${suggestion.id}`,
+                icon: suggestion.icon || '💡',
+                title: suggestion.title,
+                message: suggestion.message,
+                level: 'info',
+                isUrgent: false,
+                route: suggestion.actionRoute || '#insights'
+            });
+        }
+
         return notifs;
+    }
+
+    getUrgentNotifications() {
+        const notifs = this.getNotifications();
+        const readIds = this.getReadNotificationIds();
+        return notifs.filter(n => !readIds.includes(n.id) && !!n.isUrgent);
     }
 
     getReadNotificationIds() {

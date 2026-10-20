@@ -79,12 +79,10 @@ class App {
             }, 600);
         }
 
-        // Check contextual suggestions after load (only if authenticated and not on login page)
+        // Check for urgent ASAP notifications only (suppress non-urgent popups so user isn't bombarded)
         setTimeout(() => {
-            if (store.getCurrentUser() && this.currentView !== 'login' && sessionStorage.getItem('mindwallet_session_active') === 'true') {
-                feedback.checkAndShowContextualSuggestion();
-            }
-        }, 1200);
+            this.checkAndShowUrgentNotification();
+        }, 800);
     }
 
     setupRouter() {
@@ -179,14 +177,6 @@ class App {
         if (parentView === 'login') {
             coach.clearAll();
             feedback.clearFloatingFeedback();
-        } else {
-            // Trigger contextual suggestion & coach section visit only on authenticated route changes
-            setTimeout(() => {
-                if (store.getCurrentUser() && this.currentView !== 'login') {
-                    feedback.checkAndShowContextualSuggestion();
-                    coach.onSectionVisit(parentView);
-                }
-            }, 800);
         }
     }
 
@@ -457,17 +447,14 @@ class App {
             feedback.showToast(`Reverted back to profile: ${previousPreset.name}.`, 'info');
         };
 
-        // Action toast with explicit undo callback
-        feedback.showToast(`Switched to profile: ${currentUser?.name || personaKey}`, 'success', {
-            label: 'Undo',
-            onUndo: revertProfile
-        });
+        coach.clearAll();
+        feedback.clearFloatingFeedback();
 
-        // Show what changed coach card with matching undo capability
+        // Consolidated, non-intrusive feedback card that explains adaptations and provides Undo
         const changes = onboarding.getChangesDescription(personaKey);
         coach.onPersonaChanged(
-            previousPersona.replace('_', ' '),
-            personaKey.replace('_', ' '),
+            previousPreset.name || previousPersona.replace('_', ' '),
+            currentUser?.name || personaKey.replace('_', ' '),
             changes,
             revertProfile
         );
@@ -1647,6 +1634,21 @@ class App {
                 hideDropdown();
             }
         });
+    }
+
+    // --- Urgent ASAP Notifications Engine (Strict Minimal) ---
+    checkAndShowUrgentNotification() {
+        const isSessionActive = sessionStorage.getItem('mindwallet_session_active') === 'true';
+        if (!store.getCurrentUser() || !isSessionActive || this.currentView === 'login') {
+            return;
+        }
+
+        const urgentNotifs = store.getUrgentNotifications();
+        if (urgentNotifs.length > 0) {
+            // Only pop up the single most critical item (e.g. budget exceeded or subscription due today)
+            const top = urgentNotifs[0];
+            feedback.showToast(`${top.icon || '🚨'} ${top.title}: ${top.message}`, 'danger');
+        }
     }
 
     // --- Dynamic Notifications Drawer & Badge ---
